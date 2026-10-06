@@ -38,7 +38,7 @@ def infer_topics_from_text(text: str) -> List[str]:
         "process": ["process", "process state", "pcb", "task control block"],
         "cpu_scheduling": ["scheduling", "fcfs", "sjf", "round robin", "priority scheduling", "gantt chart"],
         "synchronization": ["semaphore", "mutex", "critical section", "synchronization", "peterson"],
-        "deadlock": ["deadlock", "resource allocation", "banker's algorithm", "safe state", "wait-for graph"],
+        "deadlock": ["deadlock", "banker's algorithm", "banker", "safe state", "wait-for graph", "resource allocation graph", "deadlock detection", "deadlock prevention"],
         "memory_management": ["paging", "segmentation", "virtual memory", "page table", "tlb", "lru", "page replacement"],
         "file_system": ["file system", "directory", "disk scheduling", "fcfs disk", "scan", "c-scan", "raid"],
         "osi_model": ["osi", "tcp/ip", "protocol", "layer", "transport layer", "network layer"],

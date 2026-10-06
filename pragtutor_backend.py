@@ -108,36 +108,31 @@ def find_relevant_topic_images(topic=None, query=None, subject="operating_system
             "caption": "Process Scheduling Queues (Job Queue, Ready Queue, Device Queue)"
         },
         {
-            "keys": ["cpu_scheduling", "cpu scheduler", "preemptive", "non-preemptive", "scheduling algorithm"],
+            "keys": ["cpu_scheduling", "cpu scheduler", "preemptive", "non-preemptive", "scheduling algorithm", "fcfs", "sjf"],
             "rel_path": "images/os_unit1/page_28_img_1.jpeg",
             "caption": "CPU Scheduling Architecture & Dispatcher Workflow"
         },
         {
-            "keys": ["round_robin", "gantt chart", "turnaround time", "waiting time"],
+            "keys": ["round_robin", "gantt chart", "gantt", "turnaround time", "waiting time"],
             "rel_path": "images/os_unit1/page_34_img_1.jpeg",
             "caption": "CPU Scheduling Criteria & Execution Timeline Diagram"
         }
     ]
 
+    from retrieve import is_valid_display_image
+
     for item in diagram_map:
-        matches = any(k in t_str or k in q_str for k in item["keys"])
+        # Strictly match candidate diagram keys against the detected topic string t_str
+        matches = any(k in t_str for k in item["keys"])
         if matches:
             full_p = os.path.join(root_dir, item["rel_path"])
-            if os.path.exists(full_p):
+            # Ensure file exists and passes blank/white/tiny image validation check
+            if is_valid_display_image(full_p):
                 images_found.append({
                     "url": f"/images/os_unit1/{os.path.basename(full_p)}",
                     "caption": item["caption"],
                     "is_requested": requested_image
                 })
-
-    if requested_image and not images_found:
-        default_p = os.path.join(root_dir, "images/os_unit1/page_3_img_3.jpeg")
-        if os.path.exists(default_p):
-            images_found.append({
-                "url": "/images/os_unit1/page_3_img_3.jpeg",
-                "caption": f"Course Diagram Reference for {(t_str or 'Operating Systems').replace('_', ' ').title()}",
-                "is_requested": True
-            })
 
     return images_found
 
@@ -186,6 +181,27 @@ def process_query(
     )
 
     target_topic = topic_result.get("topic")
+    confidence = topic_result.get("confidence", 0.0)
+
+    # Check for unlabelled image with low classification confidence
+    is_unlabelled = mm_context.get("has_images") and not mm_context.get("raw_query")
+    if is_unlabelled and (not target_topic or confidence < 0.35):
+        print("⚠️ Low-confidence image topic classification fallback triggered.")
+        return {
+            "status": "low_confidence",
+            "topic": "Topic Unclear",
+            "topic_id": "unidentified",
+            "topic_name": "Topic Unclear",
+            "topic_confidence": 0,
+            "level": level,
+            "completedPrereqs": [],
+            "missingPrereqs": [],
+            "learningPath": [],
+            "sources": [],
+            "images": [],
+            "answer": "I couldn't confidently identify the topic from this image. Please provide the topic or a short question about the image."
+        }
+
     if not target_topic:
         target_topic = "General Concept"
 
@@ -196,7 +212,7 @@ def process_query(
 
     print(
         "Confidence:",
-        f"{topic_result.get('confidence', 0):.4f}"
+        f"{confidence:.4f}"
     )
 
     # ========================================================
@@ -283,6 +299,7 @@ def process_query(
         query=mm_context,
         subject=subject,
         target_topic=target_topic,
+        retrieved_chunks=retrieved_content,
         top_k=3
     )
 

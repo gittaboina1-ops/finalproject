@@ -1,303 +1,141 @@
 import base64
-import io
 import json
 import os
-import time
-import urllib.request
-import urllib.error
-import ssl
+import requests
 from typing import Any, Dict, List, Optional, Union
-
-def get_ssl_context():
-    try:
-        import certifi
-        return ssl.create_default_context(cafile=certifi.where())
-    except Exception:
-        return ssl._create_unverified_context()
-
 
 # ============================================================
 # .ENV FILE LOADER
 # ============================================================
 
 def load_env_file():
-    env_path = ".env"
-    if os.path.exists(env_path):
-        try:
-            with open(env_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        key, value = line.split("=", 1)
-                        key = key.strip()
-                        value = value.strip().strip("'\"")
-                        if key and not os.environ.get(key):
-                            os.environ[key] = value
-        except Exception:
-            pass
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    env_paths = [
+        os.path.join(root_dir, ".env"),
+        ".env",
+        os.path.join(root_dir, "LPITUTOR", ".env")
+    ]
+    for env_path in env_paths:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip().strip("'\"")
+                            if key:
+                                os.environ[key] = value
+            except Exception:
+                pass
 
 load_env_file()
 
-# Supported Providers: 'gemini', 'openai', 'auto'
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "auto").lower()
-
-DEFAULT_GEMINI_MODEL = os.environ.get("GEMINI_MODEL", os.environ.get("LLM_MODEL", "gemini-3.6-flash"))
-DEFAULT_OPENAI_MODEL = os.environ.get("OPENAI_MODEL", os.environ.get("LLM_MODEL", "gpt-4o-mini"))
+# OpenRouter is the single LLM provider used by the application.
+OPENROUTER_BASE_URL = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
 
 
 # ============================================================
-# API KEY DISCOVERY & PROVIDER SELECTION
+# OPENROUTER LLM GENERATOR (DIRECT HTTP POST REQUEST VIA REQUESTS)
 # ============================================================
 
-def detect_active_llm_provider() -> tuple[Optional[str], Optional[str]]:
-    """
-    Detects which LLM provider API key is set in environment.
-    Returns (provider_name, api_key)
-    """
-    provider_override = os.environ.get("LLM_PROVIDER", "auto").lower()
-
-    if provider_override in ["gemini", "google"]:
-        gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-        if gemini_key:
-            return "gemini", gemini_key
-
-    if provider_override == "openai":
-        openai_key = os.environ.get("OPENAI_API_KEY")
-        if openai_key:
-            return "openai", openai_key
-
-    # Auto-detection priority: Gemini API -> OpenAI API
-    gemini_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
-    if gemini_key:
-        return "gemini", gemini_key
-
-    openai_key = os.environ.get("OPENAI_API_KEY")
-    if openai_key:
-        return "openai", openai_key
-
-    return None, None
-
-
-# ============================================================
-# GEMINI LLM GENERATOR (SDK & REST API FALLBACK)
-# ============================================================
-
-def generate_gemini_via_rest(
-    prompt: str,
-    multimodal_context: Optional[Dict[str, Any]] = None,
-    api_key: str = "",
-    model_name: str = DEFAULT_GEMINI_MODEL
-) -> str:
-    """REST API generator for Gemini API using standard library urllib with backoff and model fallback."""
-    models_to_try = [model_name]
-    fallback_models = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3-flash-preview", "gemini-3.1-pro-preview"]
-    for fm in fallback_models:
-        if fm not in models_to_try:
-            models_to_try.append(fm)
-
-    parts: List[Dict[str, Any]] = [{"text": prompt}]
-
-    if multimodal_context and multimodal_context.get("has_images"):
-        for img_detail in multimodal_context.get("image_details", []):
-            data_uri = img_detail.get("full_data_uri") or img_detail.get("data_uri", "")
-            mime_type = "image/png"
-            b64_data = ""
-
-            if "base64," in data_uri:
-                header, b64_data = data_uri.split("base64,", 1)
-                if "data:" in header and ";base64" in header:
-                    mime_type = header.replace("data:", "").replace(";base64", "").strip() or "image/png"
-            elif data_uri:
-                b64_data = data_uri.strip()
-
-            if b64_data:
-                b64_clean = b64_data.strip()
-                missing_padding = len(b64_clean) % 4
-                if missing_padding:
-                    b64_clean += "=" * (4 - missing_padding)
-
-                parts.append({
-                    "inline_data": {
-                        "mime_type": mime_type,
-                        "data": b64_clean
-                    }
-                })
-
-    payload = {
-        "contents": [
-            {
-                "parts": parts
-            }
-        ]
-    }
-
-    last_error = ""
-
-    for current_model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={api_key}"
-
-        # Up to 2 retries per model for rate limit / temporary 503
-        for attempt in range(2):
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode("utf-8"),
-                headers={
-                    "Content-Type": "application/json",
-                    "User-Agent": "PragTutor/1.0"
-                },
-                method="POST"
-            )
-
-            try:
-                with urllib.request.urlopen(req, context=get_ssl_context(), timeout=15) as resp:
-                    resp_bytes = resp.read()
-                    res_json = json.loads(resp_bytes.decode("utf-8"))
-                    candidates = res_json.get("candidates", [])
-                    if candidates:
-                        parts_resp = candidates[0].get("content", {}).get("parts", [])
-                        extracted_text = "".join([p.get("text", "") for p in parts_resp if "text" in p])
-                        if extracted_text:
-                            return extracted_text
-                    return "[Gemini API]: Returned empty response."
-
-            except urllib.error.HTTPError as http_err:
-                err_body = http_err.read().decode("utf-8", errors="ignore")
-                last_error = f"[Gemini LLM Error HTTP {http_err.code}]: {err_body or str(http_err)}"
-
-                # 404 Model Not Found -> try next model immediately
-                if http_err.code == 404:
-                    break
-
-                # 429 or 503 -> wait and retry once
-                if http_err.code in [429, 503] and attempt == 0:
-                    time.sleep(2)
-                    continue
-                else:
-                    break
-
-            except Exception as err:
-                last_error = f"[Gemini LLM Error]: {err}"
-                break
-
-    return last_error or "[Gemini LLM Error]: Failed to get response from Gemini API models."
-
-
-def generate_gemini_response(
-    prompt: str,
-    multimodal_context: Optional[Dict[str, Any]] = None,
-    api_key: str = ""
-) -> str:
-    model_name = os.environ.get("GEMINI_MODEL", os.environ.get("LLM_MODEL", DEFAULT_GEMINI_MODEL))
-
-    # Fast REST generator using urllib with timeouts and model fallback
-    res = generate_gemini_via_rest(
-        prompt=prompt,
-        multimodal_context=multimodal_context,
-        api_key=api_key,
-        model_name=model_name
-    )
-    if res and not res.startswith("[Gemini LLM Error"):
-        return res
-
-    # SDK Try fallback
-    try:
-        from google import genai
-        client = genai.Client(api_key=api_key)
-        contents = [prompt]
-        response = client.models.generate_content(
-            model=model_name,
-            contents=contents
-        )
-        if response.text:
-            return response.text
-    except Exception:
-        pass
-
-    return res or "[Gemini API]: Unable to connect to Gemini API service."
-
-
-# ============================================================
-# OPENAI LLM GENERATOR (SDK & REST API FALLBACK)
-# ============================================================
-
-def generate_openai_via_rest(
+def generate_openrouter_response(
     prompt: str,
     multimodal_payload: Optional[Union[List[Any], Dict[str, Any]]] = None,
-    api_key: str = "",
-    model_name: str = DEFAULT_OPENAI_MODEL
+    multimodal_context: Optional[Dict[str, Any]] = None,
+    api_key: Optional[str] = None,
+    model_name: Optional[str] = None
 ) -> str:
-    """REST API generator for OpenAI using standard library urllib."""
-    url = "https://api.openai.com/v1/chat/completions"
+    """
+    Generates tutor response using OpenRouter's direct HTTP Chat Completions API.
+    Reads OPENROUTER_API_KEY, OPENROUTER_BASE_URL, and OPENROUTER_MODEL from environment.
+    """
+    if not api_key:
+        api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+
+    if not api_key:
+        return (
+            "### ⚠️ PragTutor OpenRouter Notice\n\n"
+            "No active OpenRouter API key detected in your environment or `.env` file.\n"
+            "The backend has successfully processed your course material, identified the topic, checked prerequisites, and constructed the dynamic prompt.\n\n"
+            "**To connect PragTutor to live OpenRouter AI:**\n\n"
+            "Add your key to the `.env` file in your project directory:\n\n"
+            "```env\n"
+            "OPENROUTER_API_KEY=\"your_openrouter_api_key\"\n"
+            "OPENROUTER_BASE_URL=\"https://openrouter.ai/api/v1\"\n"
+            "OPENROUTER_MODEL=\"openai/gpt-4o-mini\"\n"
+            "```\n"
+        )
+
+    base_url = os.environ.get("OPENROUTER_BASE_URL", OPENROUTER_BASE_URL).rstrip("/")
+    if not model_name:
+        model_name = os.environ.get("OPENROUTER_MODEL", "").strip()
+
+    if not model_name:
+        return "[OpenRouter LLM Error]: OPENROUTER_MODEL environment variable is not set."
+
+    url = f"{base_url}/chat/completions"
 
     if multimodal_payload and isinstance(multimodal_payload, list):
         messages = multimodal_payload
+    elif multimodal_context and multimodal_context.get("has_images"):
+        content_blocks = [{"type": "text", "text": prompt}]
+        image_payloads = multimodal_context.get("llm_image_payloads", [])
+        content_blocks.extend(image_payloads)
+        messages = [{"role": "user", "content": content_blocks}]
     else:
         messages = [{"role": "user", "content": prompt}]
 
+    max_tokens_val = int(os.environ.get("OPENROUTER_MAX_TOKENS", 1000))
     payload = {
         "model": model_name,
-        "messages": messages
+        "messages": messages,
+        "max_tokens": max_tokens_val
     }
 
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-            "User-Agent": "PragTutor/1.0"
-        },
-        method="POST"
-    )
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://pragtutor.edu",
+        "X-Title": "PragTutor EdTech"
+    }
 
     try:
-        with urllib.request.urlopen(req, context=get_ssl_context(), timeout=30) as resp:
-            resp_bytes = resp.read()
-            res_json = json.loads(resp_bytes.decode("utf-8"))
-            choices = res_json.get("choices", [])
-            if choices:
-                return choices[0].get("message", {}).get("content", "")
-            return "[OpenAI API]: Returned empty choices."
-    except urllib.error.HTTPError as http_err:
-        err_body = http_err.read().decode("utf-8", errors="ignore")
-        return f"[OpenAI LLM Error HTTP {http_err.code}]: {err_body or str(http_err)}"
-    except Exception as err:
-        return f"[OpenAI LLM Error]: {err}"
-
-
-def generate_openai_response(
-    prompt: str,
-    multimodal_payload: Optional[Union[List[Any], Dict[str, Any]]] = None,
-    api_key: str = ""
-) -> str:
-    model_name = os.environ.get("OPENAI_MODEL", os.environ.get("LLM_MODEL", DEFAULT_OPENAI_MODEL))
-
-    try:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key)
-
-        if multimodal_payload and isinstance(multimodal_payload, list):
-            messages = multimodal_payload
-        else:
-            messages = [{"role": "user", "content": prompt}]
-
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=messages
+        response = requests.post(
+            url,
+            headers=headers,
+            json=payload,
+            timeout=60
         )
-        return response.choices[0].message.content
-    except ImportError:
-        pass
-    except Exception as err:
-        pass
 
-    # Fallback to urllib direct REST API call
-    return generate_openai_via_rest(
-        prompt=prompt,
-        multimodal_payload=multimodal_payload,
-        api_key=api_key,
-        model_name=model_name
-    )
+        if response.status_code != 200:
+            try:
+                err_json = response.json()
+                err_msg = err_json.get("error", {}).get("message") or response.text
+            except Exception:
+                err_msg = response.text or f"HTTP Status {response.status_code}"
+            return f"[OpenRouter LLM Error HTTP {response.status_code}]: {err_msg}"
+
+        res_json = response.json()
+        choices = res_json.get("choices", [])
+        if choices:
+            content = choices[0].get("message", {}).get("content", "")
+            if content:
+                return content
+            return "[OpenRouter API]: Returned empty answer content."
+        return "[OpenRouter API]: Returned empty response structure (no choices)."
+
+    except requests.exceptions.Timeout:
+        return "[OpenRouter LLM Error]: Request timed out after 60 seconds."
+    except requests.exceptions.ConnectionError as conn_err:
+        return f"[OpenRouter LLM Error]: Connection failed ({conn_err})"
+    except requests.exceptions.HTTPError as http_err:
+        return f"[OpenRouter LLM Error]: HTTP error ({http_err})"
+    except json.JSONDecodeError:
+        return "[OpenRouter LLM Error]: Failed to parse JSON response from server."
+    except Exception as err:
+        return f"[OpenRouter LLM Error]: {err}"
 
 
 # ============================================================
@@ -310,39 +148,13 @@ def generate_response(
     multimodal_context: Optional[Dict[str, Any]] = None
 ) -> str:
     """
-    Generates tutor response using connected LLM (Google Gemini or OpenAI GPT).
-    Auto-detects API key from environment variables.
+    Generates tutor response using OpenRouter direct HTTP request as sole LLM provider.
     """
-    provider, api_key = detect_active_llm_provider()
-
-    if not provider or not api_key:
-        return (
-            "\n" + "=" * 70 + "\n"
-            "[PRAGTUTOR LLM CONNECTION NOTICE]\n"
-            "=" * 70 + "\n"
-            "No active LLM API key detected in your environment or .env file.\n"
-            "The backend has successfully generated the dynamic prompt & multimodal context.\n\n"
-            "To connect PragTutor to an LLM, provide your API key in the .env file or environment:\n"
-            "  - For Gemini API: GEMINI_API_KEY=\"your_gemini_api_key\"\n"
-            "  - For OpenAI API: OPENAI_API_KEY=\"your_openai_api_key\"\n"
-            "=" * 70
-        )
-
-    if provider == "gemini":
-        return generate_gemini_response(
-            prompt=prompt,
-            multimodal_context=multimodal_context,
-            api_key=api_key
-        )
-
-    elif provider == "openai":
-        return generate_openai_response(
-            prompt=prompt,
-            multimodal_payload=multimodal_payload,
-            api_key=api_key
-        )
-
-    return "[LLM Error]: Unknown LLM provider specified."
+    return generate_openrouter_response(
+        prompt=prompt,
+        multimodal_payload=multimodal_payload,
+        multimodal_context=multimodal_context
+    )
 
 
 # ============================================================
@@ -358,11 +170,14 @@ Give:
 2. Simple explanation
 3. Example
 """
-    provider, api_key = detect_active_llm_provider()
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
+    model_name = os.environ.get("OPENROUTER_MODEL", "")
     masked_key = f"{api_key[:6]}...{api_key[-4:]}" if api_key and len(api_key) > 10 else ("Set" if api_key else "None")
     print("=" * 80)
-    print("TESTING PRAGTUTOR LLM SERVICE")
-    print(f"Active Provider : {provider if provider else 'None (Waiting for API key)'}")
+    print("TESTING PRAGTUTOR OPENROUTER LLM SERVICE (DIRECT HTTP REQUEST)")
+    print(f"Active Provider : OpenRouter Direct HTTP (requests)")
+    print(f"Base URL        : {OPENROUTER_BASE_URL}")
+    print(f"Model Configured: {model_name}")
     print(f"API Key Status  : {masked_key}")
     print("=" * 80)
 

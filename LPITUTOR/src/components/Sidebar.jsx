@@ -96,7 +96,7 @@ export const Sidebar = () => {
             </div>
             <div className="flex justify-between">
               <span>LLM Engine:</span>
-              <span className="text-slate-200 font-mono">Gemini 2.5 Tutor</span>
+              <span className="text-slate-200 font-mono">OpenRouter Tutor</span>
             </div>
           </div>
         </div>

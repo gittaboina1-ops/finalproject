@@ -111,9 +111,9 @@
       "teacher_id": "TCH011"
     },
     "stu001@pragtutor.edu": {
-      "student_id": "STU001",
-      "name": "Student 1",
-      "subject": "Operating Systems",
+      "email": "stu001@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
       "completed_topics": [
         "process",
         "process states",
@@ -122,12 +122,7 @@
       "in_progress_topics": [
         "cpu scheduling"
       ],
-      "topic_progress": {
-        "process": 1.0,
-        "process states": 1.0,
-        "pcb": 1.0,
-        "cpu scheduling": 0.4
-      },
+      "name": "Student 1",
       "query_history": [
         {
           "query": "What is a process?",
@@ -138,14 +133,19 @@
           "topic": "cpu scheduling"
         }
       ],
-      "access_granted": true,
-      "account_status": "active",
-      "email": "stu001@pragtutor.edu",
       "role": "student",
       "selected_subjects": [
         "operating_systems"
       ],
-      "status": "active"
+      "status": "active",
+      "student_id": "STU001",
+      "subject": "Operating Systems",
+      "topic_progress": {
+        "process": 1.0,
+        "process states": 1.0,
+        "pcb": 1.0,
+        "cpu scheduling": 0.4
+      }
     },
     "p@gmail.com": {
       "email": "p@gmail.com",
@@ -199,11 +199,10 @@
       "subjects": []
     },
     "verify@pragtutor.edu": {
-      "student_id": "STU_VERIFY_999",
+      "email": "verify@pragtutor.edu",
       "access_granted": true,
       "account_status": "active",
       "created_at": "2026-09-24 17:24:12",
-      "email": "verify@pragtutor.edu",
       "joined_date": "2026-09-24",
       "name": "Verification Student",
       "password": "123456",
@@ -213,6 +212,7 @@
         "computer_networks"
       ],
       "status": "active",
+      "student_id": "STU_VERIFY_999",
       "subjects": [
         "operating_systems",
         "computer_networks"
@@ -278,6 +278,42 @@
       "selected_subjects": [],
       "status": "active",
       "student_id": "STU013",
+      "subjects": [],
+      "teacher_id": null
+    },
+    "sunithagittaboina@gmail.com": {
+      "email": "sunithagittaboina@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-03 18:54:23",
+      "department": null,
+      "id": "STU014",
+      "joined_date": "2026-10-03",
+      "name": "a",
+      "password": "varun@21",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU014",
+      "subjects": [],
+      "teacher_id": null
+    },
+    "jawopej417@abowned.com": {
+      "email": "jawopej417@abowned.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-04 21:09:04",
+      "department": null,
+      "id": "STU015",
+      "joined_date": "2026-10-04",
+      "name": "varun",
+      "password": "jhkjads",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU015",
       "subjects": [],
       "teacher_id": null
     }
@@ -396,9 +432,9 @@
   ],
   "students": [
     {
-      "student_id": "STU001",
-      "name": "Student 1",
-      "subject": "Operating Systems",
+      "email": "stu001@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
       "completed_topics": [
         "process",
         "process states",
@@ -407,12 +443,7 @@
       "in_progress_topics": [
         "cpu scheduling"
       ],
-      "topic_progress": {
-        "process": 1.0,
-        "process states": 1.0,
-        "pcb": 1.0,
-        "cpu scheduling": 0.4
-      },
+      "name": "Student 1",
       "query_history": [
         {
           "query": "What is a process?",
@@ -423,14 +454,19 @@
           "topic": "cpu scheduling"
         }
       ],
-      "access_granted": true,
-      "account_status": "active",
-      "email": "stu001@pragtutor.edu",
       "role": "student",
       "selected_subjects": [
         "operating_systems"
       ],
-      "status": "active"
+      "status": "active",
+      "student_id": "STU001",
+      "subject": "Operating Systems",
+      "topic_progress": {
+        "process": 1.0,
+        "process states": 1.0,
+        "pcb": 1.0,
+        "cpu scheduling": 0.4
+      }
     },
     {
       "email": "p@gmail.com",
@@ -484,11 +520,10 @@
       "subjects": []
     },
     {
-      "student_id": "STU_VERIFY_999",
+      "email": "verify@pragtutor.edu",
       "access_granted": true,
       "account_status": "active",
       "created_at": "2026-09-24 17:24:12",
-      "email": "verify@pragtutor.edu",
       "joined_date": "2026-09-24",
       "name": "Verification Student",
       "password": "123456",
@@ -498,6 +533,7 @@
         "computer_networks"
       ],
       "status": "active",
+      "student_id": "STU_VERIFY_999",
       "subjects": [
         "operating_systems",
         "computer_networks"
@@ -563,6 +599,42 @@
       "selected_subjects": [],
       "status": "active",
       "student_id": "STU013",
+      "subjects": [],
+      "teacher_id": null
+    },
+    {
+      "email": "sunithagittaboina@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-03 18:54:23",
+      "department": null,
+      "id": "STU014",
+      "joined_date": "2026-10-03",
+      "name": "a",
+      "password": "varun@21",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU014",
+      "subjects": [],
+      "teacher_id": null
+    },
+    {
+      "email": "jawopej417@abowned.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-04 21:09:04",
+      "department": null,
+      "id": "STU015",
+      "joined_date": "2026-10-04",
+      "name": "varun",
+      "password": "jhkjads",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU015",
       "subjects": [],
       "teacher_id": null
     }

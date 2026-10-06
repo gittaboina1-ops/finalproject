@@ -26,7 +26,6 @@ export const Login = () => {
   const [selectedSubjects, setSelectedSubjects] = useState(['operating_systems']);
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [receivedOtp, setReceivedOtp] = useState('');
   const [signupMsg, setSignupMsg] = useState('');
   const [signupError, setSignupError] = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
@@ -108,8 +107,7 @@ export const Login = () => {
         department.trim(),
         signupRole === 'teacher' ? selectedSubjects : []
       );
-      setReceivedOtp(res.otp_debug || '');
-      setSignupMsg(res.message || `Verification OTP code sent from pragtutor.ai@gmail.com to ${signupEmail}.`);
+      setSignupMsg(res.message || `Verification OTP code sent to ${signupEmail}.`);
       setSignupStage(2);
     } catch (err) {
       setSignupError(err.response?.data?.detail || "Failed to send OTP code. Please check your email and try again.");
@@ -140,10 +138,6 @@ export const Login = () => {
     } finally {
       setSignupLoading(false);
     }
-  };
-
-  const autoFillOtp = () => {
-    if (receivedOtp) setOtp(receivedOtp);
   };
 
   return (
@@ -425,27 +419,11 @@ export const Login = () => {
                       <div className="flex items-start gap-2">
                         <Mail className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                         <div>
-                          <span>Verification OTP code sent from </span>
-                          <strong className="text-white font-mono">pragtutor.ai@gmail.com</strong>
-                          <span> to </span>
+                          <span>Verification OTP code sent to </span>
                           <strong className="text-white font-mono">{signupEmail}</strong>.
+                          <span> Please check your email inbox.</span>
                         </div>
                       </div>
-                      
-                      {receivedOtp && (
-                        <div className="flex items-center justify-between pt-1 border-t border-emerald-500/20">
-                          <span className="text-[11px] text-amber-300 font-semibold flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" /> Code Received: <span className="font-mono text-xs text-white">{receivedOtp}</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={autoFillOtp}
-                            className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 text-[10px] font-bold transition-all flex items-center gap-1"
-                          >
-                            <Check className="w-3 h-3" /> Auto-Fill Code
-                          </button>
-                        </div>
-                      )}
                     </div>
                   )}
 

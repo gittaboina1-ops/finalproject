@@ -2,6 +2,12 @@ import os
 import sys
 import json
 import time
+
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 import random
 import glob
 import smtplib
@@ -305,25 +311,14 @@ def get_knowledge_base_monitors():
     return kb_monitors
 
 def send_otp_email(to_email: str, otp_code: str):
-    """Dispatches verification OTP email from pragtutor.ai@gmail.com and records entry in data/otp_logs.txt."""
-    log_entry = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] From: {PRAGTUTOR_SENDER_EMAIL} | To: {to_email} | OTP Code: {otp_code}\n"
-    print("=" * 65)
-    print(f"📧 [PRAGTUTOR EMAIL SENDER] From: {PRAGTUTOR_SENDER_EMAIL} -> To: {to_email}")
-    print(f"🔐 Verification OTP Code: {otp_code}")
-    print("=" * 65)
-
-    try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        with open(OTP_LOGS_FILE, "a", encoding="utf-8") as f:
-            f.write(log_entry)
-    except Exception as e:
-        print(f"OTP Log Error: {e}")
-
-    # SMTP transmission attempt if environment SMTP credentials configured
-    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    """Dispatches verification OTP email via SMTP using environment credentials."""
+    smtp_server = os.environ.get("SMTP_SERVER") or os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
-    sender_email = os.environ.get("SMTP_EMAIL", PRAGTUTOR_SENDER_EMAIL)
+    sender_email = os.environ.get("SMTP_EMAIL") or os.environ.get("SMTP_USERNAME") or os.environ.get("SMTP_FROM_EMAIL", PRAGTUTOR_SENDER_EMAIL)
     sender_password = os.environ.get("SMTP_PASSWORD", "")
+
+    print(f"[SMTP EMAIL SENDER] Dispatching OTP email to: {to_email} via {smtp_server}:{smtp_port}")
+
     if sender_password:
         try:
             msg = MIMEText(f"Hello!\n\nYour PragTutor verification OTP code is: {otp_code}\n\nPlease enter this code to complete your signup.\n\nRegards,\nPragTutor Team")
@@ -334,8 +329,14 @@ def send_otp_email(to_email: str, otp_code: str):
                 server.starttls()
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, [to_email], msg.as_string())
+            print(f"[SMTP OK] Successfully delivered OTP email to {to_email}")
+            return True
         except Exception as e:
-            print(f"SMTP Transmission Note: {e}")
+            print(f"[SMTP Error] Failed to transmit email: {e}")
+            return False
+    else:
+        print("[SMTP Notice] SMTP_PASSWORD not set in .env. To receive actual emails, configure SMTP_PASSWORD in .env.")
+        return False
 
 # ------------------------------------------------------------------
 # Request Schemas
@@ -424,14 +425,13 @@ def request_otp(req: OTPRequest):
         "timestamp": time.strftime("%Y-%m-%d %H:%M"),
         "user": req.name,
         "role": req.role.upper(),
-        "action": f"Requested signup OTP code sent from {PRAGTUTOR_SENDER_EMAIL} to {email}"
+        "action": f"Requested signup OTP code dispatched to {email}"
     })
 
     return {
         "status": "success",
-        "message": f"Verification OTP code sent from {PRAGTUTOR_SENDER_EMAIL} to {email}.",
-        "sender_email": PRAGTUTOR_SENDER_EMAIL,
-        "otp_debug": otp
+        "message": f"Verification OTP code sent to {email}. Please check your email inbox.",
+        "sender_email": PRAGTUTOR_SENDER_EMAIL
     }
 
 @app.post("/api/auth/verify-otp-register")

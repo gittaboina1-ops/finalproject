@@ -1,3 +1,4 @@
+import os
 import chromadb
 
 from sentence_transformers import SentenceTransformer
@@ -7,7 +8,8 @@ from sentence_transformers import SentenceTransformer
 # CONFIGURATION
 # ============================================================
 
-CHROMA_PATH = "./chroma_db"
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+CHROMA_PATH = os.path.join(ROOT_DIR, "chroma_db")
 
 COLLECTION_NAME = "os_knowledge_base"
 
@@ -17,51 +19,70 @@ TOP_K = 5
 
 
 # ============================================================
-# LOAD EMBEDDING MODEL
+# LOAD EMBEDDING MODEL (REUSE GLOBAL INSTANCE IF AVAILABLE)
 # ============================================================
 
-print("Loading embedding model...")
-
 try:
-    embedding_model = SentenceTransformer(EMBEDDING_MODEL, local_files_only=True)
+    from topic_identifier import model as embedding_model
 except Exception:
-    embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-
-print("Embedding model loaded.")
+    try:
+        embedding_model = SentenceTransformer(EMBEDDING_MODEL, local_files_only=True)
+    except Exception:
+        embedding_model = SentenceTransformer(EMBEDDING_MODEL)
 
 
 # ============================================================
 # CONNECT TO CHROMADB
 # ============================================================
 
-print("Connecting to ChromaDB...")
-
 client = chromadb.PersistentClient(
     path=CHROMA_PATH
 )
 
+COLLECTION_CACHE = {}
+VISUAL_EMBS_CACHE = {}
 
 # ============================================================
-# LOAD EXISTING COLLECTION
+# LOAD EXISTING COLLECTION (CACHED FOR PERFORMANCE)
 # ============================================================
 
 def get_subject_collection(subject_name=None):
     if not subject_name:
         subject_name = COLLECTION_NAME
-    clean_sub = str(subject_name).lower().replace(" ", "_")
+    clean_sub = str(subject_name).lower().replace(" ", "_").replace("-", "_")
     target_name = f"{clean_sub}_knowledge_base" if not clean_sub.endswith("_knowledge_base") else clean_sub
     
+    if clean_sub in COLLECTION_CACHE:
+        return COLLECTION_CACHE[clean_sub]
+
+    col = None
+    # Try normalized target name (e.g. operating_systems_knowledge_base)
     try:
-        return client.get_collection(name=target_name)
+        col = client.get_collection(name=target_name)
     except Exception:
+        pass
+
+    # Try os_knowledge_base alias
+    if not col and clean_sub in ["operating_systems", "os"]:
         try:
-            return client.get_collection(name=COLLECTION_NAME)
+            col = client.get_collection(name="os_knowledge_base")
         except Exception:
-            return client.get_or_create_collection(name=target_name)
+            pass
+
+    # Fallback to default or create if empty
+    if not col:
+        try:
+            col = client.get_collection(name=COLLECTION_NAME)
+        except Exception:
+            col = client.get_or_create_collection(name=target_name)
+
+    if col and col.count() > 0:
+        COLLECTION_CACHE[clean_sub] = col
+    return col
 
 # Default collection reference for compatibility
 try:
-    collection = client.get_collection(name=COLLECTION_NAME)
+    collection = get_subject_collection(COLLECTION_NAME)
 except Exception:
     collection = None
 
@@ -171,14 +192,110 @@ def normalize_subject_id(subject_id):
     clean = str(subject_id).lower().strip().replace("-", "_")
     return SUBJECT_ID_MAP.get(clean, clean)
 
+TOPIC_CATEGORIES = {
+    "deadlock": ["deadlock", "deadlocks", "banker", "wait-for", "resource allocation graph", "deadlock detection", "deadlock prevention", "deadlock avoidance", "deadlock recovery"],
+    "paging_memory": ["paging", "page table", "page replacement", "virtual memory", "segmentation", "tlb", "frame", "lru", "fifo page", "demand paging", "page fault"],
+    "cpu_scheduling": ["cpu scheduling", "gantt", "fcfs", "sjf", "round robin", "priority scheduling", "dispatcher", "burst time", "turnaround time"],
+    "process_concepts": ["process state", "pcb", "process control block", "task control block", "context switch", "state transition"],
+    "synchronization": ["synchronization", "semaphore", "mutex", "critical section", "peterson", "dining philosophers", "monitors"],
+    "file_systems": ["file system", "disk scheduling", "c-scan", "scan disk", "inode", "raid", "fcfs disk"],
+    "networking": ["osi model", "tcp/ip", "routing", "subnet", "ip address", "packet", "router"],
+    "dbms": ["sql", "normalization", "transaction", "acid", "relational", "schema"],
+    "data_structures": ["binary tree", "bst", "graph algorithm", "linked list", "stack", "queue"]
+}
+
+def get_topic_keywords(target_topic):
+    if not target_topic:
+        return []
+    
+    t_clean = str(target_topic).lower().replace("_", " ").strip()
+    
+    topic_keywords_map = {
+        "cpu scheduling": ["cpu scheduling", "scheduling", "gantt", "gantt chart", "fcfs", "sjf", "round robin", "priority scheduling", "dispatcher", "turnaround time", "waiting time", "burst time"],
+        "process states": ["process state", "state transition", "ready queue", "running", "waiting", "terminated", "suspended", "pcb"],
+        "process control block": ["process control block", "pcb", "task control block", "registers", "process table"],
+        "deadlock": ["deadlock", "deadlocks", "banker", "banker's algorithm", "safe state", "wait-for", "resource allocation graph", "deadlock detection", "deadlock prevention", "deadlock avoidance", "deadlock recovery"],
+        "deadlocks": ["deadlock", "deadlocks", "banker", "banker's algorithm", "safe state", "wait-for", "resource allocation graph", "deadlock detection", "deadlock prevention", "deadlock avoidance", "deadlock recovery"],
+        "memory management": ["memory management", "paging", "page table", "virtual memory", "segmentation", "tlb", "frame", "allocation"],
+        "paging": ["paging", "page table", "page fault", "frame", "tlb", "virtual memory", "page replacement"],
+        "page replacement": ["page replacement", "fifo page", "lru page", "optimal page", "page fault", "frame", "paging"],
+        "virtual memory": ["virtual memory", "paging", "demand paging", "page replacement", "lru", "fifo", "page fault"],
+        "context switch": ["context switch", "context switching", "cpu switch"],
+        "synchronization": ["synchronization", "semaphore", "mutex", "critical section", "peterson", "monitor"],
+        "file systems": ["file system", "directory", "disk scheduling", "c-scan", "scan", "fcfs disk", "raid", "inode"],
+        "osi model": ["osi", "osi model", "layers", "transport layer", "network layer", "data link", "physical layer"],
+        "routing": ["routing", "ip address", "subnet", "router", "packet", "dijkstra"],
+        "binary tree": ["binary tree", "bst", "traversal", "tree", "node"],
+        "graph algorithms": ["graph", "bfs", "dfs", "dijkstra", "shortest path"],
+        "sql queries": ["sql", "query", "select", "join", "table", "schema", "relational"],
+        "normalization": ["normalization", "1nf", "2nf", "3nf", "bcnf", "dependency"],
+        "transactions": ["transaction", "acid", "concurrency", "lock", "serializability"]
+    }
+    
+    kws = set()
+    if t_clean:
+        kws.add(t_clean)
+        if t_clean.endswith("s") and len(t_clean) > 4:
+            kws.add(t_clean[:-1])
+        for word in t_clean.split():
+            if len(word) > 3 and word not in ["with", "from", "that", "this", "some", "type"]:
+                kws.add(word)
+
+    for top_key, kw_list in topic_keywords_map.items():
+        if top_key in t_clean or t_clean in top_key:
+            for kw in kw_list:
+                kws.add(kw)
+                
+    return list(kws)
+
+IMAGE_VALID_CACHE = {}
+
+def is_valid_display_image(img_path: str, min_width: int = 60, min_height: int = 60) -> bool:
+    """
+    Validates if an image file exists, can be opened by PIL, meets minimum dimensions,
+    and is not blank, completely white, or corrupted (cached for fast performance).
+    """
+    if not img_path:
+        return False
+    full_path = img_path if os.path.isabs(img_path) else os.path.join(ROOT_DIR, img_path.lstrip("/\\"))
+    if full_path in IMAGE_VALID_CACHE:
+        return IMAGE_VALID_CACHE[full_path]
+
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        IMAGE_VALID_CACHE[full_path] = False
+        return False
+    try:
+        from PIL import Image, ImageStat
+        with Image.open(full_path) as im:
+            w, h = im.size
+            if w < min_width or h < min_height:
+                IMAGE_VALID_CACHE[full_path] = False
+                return False
+            # Check standard deviation of grayscale pixel intensity
+            stat = ImageStat.Stat(im.convert("L"))
+            stddev = stat.stddev[0]
+            mean = stat.mean[0]
+            # Solid/blank image check: stddev < 5.0 and pure white/black background
+            if stddev < 5.0 and (mean > 240.0 or mean < 15.0):
+                IMAGE_VALID_CACHE[full_path] = False
+                return False
+            IMAGE_VALID_CACHE[full_path] = True
+            return True
+    except Exception:
+        IMAGE_VALID_CACHE[full_path] = False
+        return False
+
 def retrieve_relevant_images(
     query,
     subject=None,
     target_topic=None,
+    retrieved_chunks=None,
     top_k=3
 ):
     """
     Retrieves the most relevant visual images/diagrams from the subject's visual metadata repository.
+    Strictly filters to ensure retrieved images match the identified topic or retrieved RAG content.
+    Excludes blank, white, corrupted, or invalid images.
     """
     norm_sub = normalize_subject_id(subject)
     visual_meta = load_visual_metadata(norm_sub)
@@ -190,30 +307,105 @@ def retrieve_relevant_images(
     else:
         search_text = str(query or "")
 
-    search_norm = search_text.lower()
-    topic_norm = (target_topic or "").lower().replace("_", " ")
+    topic_clean = (target_topic or "").lower().replace("_", " ").strip()
+    topic_kws = get_topic_keywords(target_topic)
 
-    # Compute query embedding for semantic visual matching
-    q_emb = embedding_model.encode([search_text or topic_norm], convert_to_numpy=True, normalize_embeddings=True)
+    # Determine target category for topic conflict checking
+    target_cat = None
+    if topic_clean:
+        for cat_name, cat_kws in TOPIC_CATEGORIES.items():
+            if any(ckw in topic_clean or topic_clean in ckw for ckw in cat_kws):
+                target_cat = cat_name
+                break
 
-    img_texts = [f"Caption: {item.get('caption', '')}. Context: {item.get('page_context', '')[:200]}" for item in visual_meta]
-    img_embs = embedding_model.encode(img_texts, convert_to_numpy=True, normalize_embeddings=True)
+    # Extract pages and sources of retrieved text RAG chunks for page-level matching
+    chunk_page_sources = set()
+    if retrieved_chunks and isinstance(retrieved_chunks, list):
+        for c in retrieved_chunks:
+            if isinstance(c, dict):
+                src = c.get("source") or c.get("metadata", {}).get("source")
+                pg = c.get("page") or c.get("metadata", {}).get("page")
+                if src and pg:
+                    chunk_page_sources.add((str(src).lower(), int(pg)))
+
+    search_prompt = f"{topic_clean} {search_text}".strip()
+    q_emb = embedding_model.encode([search_prompt], convert_to_numpy=True, normalize_embeddings=True)
+
+    if norm_sub not in VISUAL_EMBS_CACHE or VISUAL_EMBS_CACHE[norm_sub][0] != len(visual_meta):
+        img_texts = [f"Caption: {item.get('caption', '')}. Context: {item.get('page_context', '')[:300]}" for item in visual_meta]
+        img_embs = embedding_model.encode(img_texts, convert_to_numpy=True, normalize_embeddings=True)
+        VISUAL_EMBS_CACHE[norm_sub] = (len(visual_meta), img_embs)
+    else:
+        img_embs = VISUAL_EMBS_CACHE[norm_sub][1]
 
     similarities = cosine_similarity(q_emb, img_embs)[0]
 
     scored_items = []
     for idx, item in enumerate(visual_meta):
-        score = float(similarities[idx])
+        # Filter out blank, white, tiny, or corrupted images
+        img_rel_p = item.get("path") or ""
+        if not is_valid_display_image(img_rel_p):
+            continue
 
-        # Topic keyword bonus
+        sim_score = float(similarities[idx])
+
+        cap_lower = item.get("caption", "").lower()
+        ctx_lower = item.get("page_context", "").lower()
         rel_topics = [t.lower().replace("_", " ") for t in item.get("related_topics", [])]
-        if topic_norm and any(topic_norm in t or t in topic_norm for t in rel_topics):
-            score += 0.35
+        item_src = str(item.get("source", "")).lower()
+        item_pg = int(item.get("page", 0))
+        item_path = str(item.get("path", "")).lower()
 
-        # Query keyword bonus
-        caption_lower = item.get("caption", "").lower()
-        if search_norm and any(w in caption_lower for w in search_norm.split() if len(w) > 3):
-            score += 0.20
+        item_full_text = f"{cap_lower} {ctx_lower} {' '.join(rel_topics)} {item_path}"
+
+        # 1. TOPIC CONFLICT CHECK:
+        # If candidate text explicitly belongs to a DIFFERENT topic category
+        # and has NO keywords from the detected target topic, REJECT it.
+        has_conflict = False
+        if target_cat:
+            target_kws = TOPIC_CATEGORIES[target_cat]
+            has_target_kws = any(tkw in item_full_text for tkw in target_kws) or any(kw in item_full_text for kw in topic_kws)
+            if not has_target_kws:
+                for cat_name, cat_kws in TOPIC_CATEGORIES.items():
+                    if cat_name != target_cat:
+                        if any(ckw in item_full_text for ckw in cat_kws):
+                            has_conflict = True
+                            break
+        if has_conflict:
+            continue
+
+        # 2. CHECK TOPIC KEYWORD MATCHES
+        topic_match_found = False
+        topic_match_score = 0.0
+        for kw in topic_kws:
+            if any(kw in r_top or r_top in kw for r_top in rel_topics):
+                topic_match_score += 0.40
+                topic_match_found = True
+            if kw in cap_lower or kw in item_path:
+                topic_match_score += 0.40
+                topic_match_found = True
+            elif kw in ctx_lower:
+                topic_match_score += 0.25
+                topic_match_found = True
+
+        # 3. CHECK PAGE MATCH (with RAG text chunks retrieved for this topic)
+        same_page_match = False
+        if chunk_page_sources:
+            for (c_src, c_pg) in chunk_page_sources:
+                if (c_src in item_src or item_src in c_src) and abs(c_pg - item_pg) <= 1:
+                    same_page_match = True
+                    break
+
+        # 4. STRICT FILTER CONDITION:
+        # Require EITHER a topic keyword match OR a same-page RAG match.
+        # Vector similarity alone is NEVER trusted to include an image.
+        if not (topic_match_found or same_page_match):
+            continue
+
+        score = sim_score + topic_match_score + (0.30 if same_page_match else 0.0)
+
+        if score < 0.45:
+            continue
 
         scored_items.append((score, item))
 
@@ -222,8 +414,6 @@ def retrieve_relevant_images(
     results = []
     seen_paths = set()
     for score, item in scored_items:
-        if score < 0.20:
-            continue
         if item["path"] in seen_paths:
             continue
         seen_paths.add(item["path"])
@@ -255,7 +445,7 @@ def retrieve_multimodal(
     Returns both relevant text RAG chunks and extracted PDF images.
     """
     text_results = retrieve(query=query, top_k=top_k, subject=subject)
-    image_results = retrieve_relevant_images(query=query, subject=subject, target_topic=target_topic, top_k=3)
+    image_results = retrieve_relevant_images(query=query, subject=subject, target_topic=target_topic, retrieved_chunks=text_results, top_k=3)
     return {
         "text_results": text_results,
         "image_results": image_results

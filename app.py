@@ -183,7 +183,7 @@ class PragTutorRequestHandler(BaseHTTPRequestHandler):
                 "topic_progress": stu_data.get("topic_progress", {}),
                 "recent_queries": stu_data.get("query_history", [])
             })
-        elif path.startswith("/images/"):
+        elif path.startswith("/images/") or path.startswith("/media/"):
             img_rel_path = path.lstrip("/")
             img_full_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), img_rel_path)
             if os.path.exists(img_full_path) and os.path.isfile(img_full_path):

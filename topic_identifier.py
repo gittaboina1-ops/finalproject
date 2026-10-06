@@ -34,7 +34,7 @@ SUBJECT_ID_MAP = {
 
 def normalize_subject_id(subject_id):
     if not subject_id:
-        return "default"
+        return "operating_systems"
     clean = str(subject_id).lower().strip().replace("-", "_")
     clean_space = clean.replace("_", " ")
     if clean in SUBJECT_ID_MAP:
@@ -44,6 +44,8 @@ def normalize_subject_id(subject_id):
     return clean.replace(" ", "_")
 
 def load_topics(subject_id=None):
+    if not subject_id:
+        subject_id = "operating_systems"
     norm_sub = normalize_subject_id(subject_id)
     if norm_sub in TOPIC_CACHE:
         return TOPIC_CACHE[norm_sub]
@@ -52,17 +54,16 @@ def load_topics(subject_id=None):
     raw_data = None
     
     # 1. Try subject specific prerequisites file
-    if subject_id:
-        prereq_file = os.path.join(BASE_DIR, "data", f"prerequisites_{norm_sub}.json")
-        if os.path.exists(prereq_file):
-            try:
-                with open(prereq_file, "r", encoding="utf-8") as f:
-                    raw_data = json.load(f)
-            except Exception as e:
-                print(f"Error loading {prereq_file}: {e}")
+    prereq_file = os.path.join(BASE_DIR, "data", f"prerequisites_{norm_sub}.json")
+    if os.path.exists(prereq_file):
+        try:
+            with open(prereq_file, "r", encoding="utf-8") as f:
+                raw_data = json.load(f)
+        except Exception as e:
+            print(f"Error loading {prereq_file}: {e}")
 
     # 2. Try subject specific course topics file
-    if not raw_data and subject_id:
+    if not raw_data:
         topic_file = os.path.join(BASE_DIR, "data", f"course_topics_{norm_sub}.json")
         if os.path.exists(topic_file):
             try:
@@ -71,13 +72,22 @@ def load_topics(subject_id=None):
             except Exception as e:
                 print(f"Error loading {topic_file}: {e}")
 
-    # 3. Fallback to default COURSE_TOPICS_FILE only for default or operating_systems
-    if not raw_data and (not subject_id or norm_sub in ["default", "operating_systems"]) and os.path.exists(COURSE_TOPICS_FILE):
+    # 3. Fallback to default COURSE_TOPICS_FILE or global prerequisites.json
+    if not raw_data and os.path.exists(COURSE_TOPICS_FILE):
         try:
             with open(COURSE_TOPICS_FILE, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
         except Exception:
             pass
+
+    if not raw_data:
+        global_prereqs = os.path.join(BASE_DIR, "prerequisites.json")
+        if os.path.exists(global_prereqs):
+            try:
+                with open(global_prereqs, "r", encoding="utf-8") as f:
+                    raw_data = json.load(f)
+            except Exception:
+                pass
 
     if isinstance(raw_data, dict):
         if "units" in raw_data:
@@ -255,12 +265,29 @@ print(
 # IDENTIFY TOPIC
 # ============================================================
 
+def is_generic_or_empty_query(raw_q: str) -> bool:
+    if not raw_q:
+        return True
+    clean_q = str(raw_q).lower().strip().rstrip("?.!")
+    generic_phrases = {
+        "explain this", "what is this", "explain image", "explain the image",
+        "explain attached image", "explain the attached image", "analyze this",
+        "analyze this image", "explain", "describe this", "what is shown here",
+        "explain diagram", "explain this diagram", "tell me about this",
+        "what does this mean", "explain the diagram", "explain attached diagram"
+    }
+    return clean_q in generic_phrases or len(clean_q) < 3
+
 def identify_topic(
     query,
     top_k=TOP_K,
     subject=None
 ):
+    query_text = ""
+    mm_context = None
+
     if isinstance(query, dict):
+        mm_context = query
         query_text = query.get("combined_text") or query.get("raw_query") or ""
     else:
         query_text = str(query or "")
@@ -278,6 +305,70 @@ def identify_topic(
             "status": "no_topics_available",
             "top_matches": []
         }
+
+    raw_q = mm_context.get("raw_query") if mm_context else (query_text if not isinstance(query, dict) else "")
+    has_attached_image = bool(mm_context and mm_context.get("has_images"))
+    is_generic_query = is_generic_or_empty_query(raw_q)
+    
+    # Task 1 & Part 1 Decision Tree:
+    # 1. Text only -> Normal topic identification (No Vision)
+    # 2. Text + Image -> Normal topic identification if text query is specific (No Vision for topic ID)
+    # 3. Image + Useful OCR text -> Normal topic identification using OCR text (No Vision)
+    # 4. Image only + OCR failed/insufficient -> OpenAI Vision topic identification
+    ocr_text_clean = (mm_context.get("ocr_text") if mm_context else "").strip()
+    has_useful_ocr = len(ocr_text_clean) > 15 and not is_generic_or_empty_query(ocr_text_clean)
+    
+    # Use OpenAI Vision for topic identification ONLY when image exists, text query is empty/generic, and OCR text is insufficient
+    use_vision_for_topic = has_attached_image and is_generic_query and not has_useful_ocr
+
+    if use_vision_for_topic:
+        try:
+            # Use OpenRouter vision to identify course topic from visual content
+            from llm_service import generate_response
+            topic_names = [t["topic"] for t in cur_topics]
+            subj_display = (subject or "Operating Systems").replace("_", " ").title()
+            vision_prompt = (
+                f"The image is from an {subj_display} educational course.\n"
+                f"Identify the most likely topic represented by this image.\n"
+                f"Prefer an existing topic from the course topic list:\n"
+                f"{', '.join(topic_names)}\n\n"
+                f"Instructions:\n"
+                f"1. Select the single course topic from the list that best matches the diagram/image.\n"
+                f"2. Return ONLY the exact topic name from the allowed topics list above."
+            )
+            
+            payloads = mm_context.get("llm_image_payloads") or []
+            messages = [{"role": "user", "content": [{"type": "text", "text": vision_prompt}] + payloads}]
+            llm_topic_raw = generate_response(prompt=vision_prompt, multimodal_payload=messages, multimodal_context=mm_context).strip()
+                
+            # Match OpenRouter Vision response directly to allowed course topic list (avoid duplicate LLM calls)
+            if llm_topic_raw and "UNKNOWN" not in llm_topic_raw.upper() and not llm_topic_raw.startswith("[OpenRouter LLM Error"):
+                for t_obj in cur_topics:
+                    t_clean = normalize_text(t_obj["topic"])
+                    raw_clean = normalize_text(llm_topic_raw)
+                    if t_obj["topic"].lower() == llm_topic_raw.lower() or t_clean == raw_clean or t_clean in raw_clean or raw_clean in t_clean:
+                        return {
+                            "query": raw_q or "[Unlabelled Image Classification]",
+                            "topic": t_obj["topic"],
+                            "unit": t_obj["unit"],
+                            "confidence": 0.90,
+                            "reason": f"Identified via OpenRouter Vision visual content analysis: {t_obj['topic']}",
+                            "status": "identified_via_vision",
+                            "top_matches": [{"topic": t_obj["topic"], "unit": t_obj["unit"], "score": 0.90}]
+                        }
+            
+            # If vision model cannot identify topic, return unlabelled fallback status
+            return {
+                "query": raw_q or "[Unlabelled Image Classification]",
+                "topic": "Topic Unclear",
+                "unit": None,
+                "confidence": 0.0,
+                "reason": "Could not confidently identify topic from image visual content.",
+                "status": "unidentified_image",
+                "top_matches": []
+            }
+        except Exception as v_err:
+            print(f"Vision topic classification note: {v_err}")
 
     norm_q = normalize_text(query_text)
 

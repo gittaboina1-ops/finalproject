@@ -6,6 +6,12 @@ import signal
 import time
 
 def main():
+    if hasattr(sys.stdout, 'reconfigure'):
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+
     root_dir = os.path.dirname(os.path.abspath(__file__))
     lpitutor_dir = os.path.join(root_dir, "LPITUTOR")
     backend_dir = os.path.join(lpitutor_dir, "backend")
@@ -41,16 +47,20 @@ def main():
     if not os.path.exists(venv_python):
         venv_python = sys.executable
 
-    print(f"🔹 Using Python Environment: {venv_python}")
+    print(f"Using Python Environment: {venv_python}")
+
+    env = os.environ.copy()
+    env["HF_HUB_OFFLINE"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
 
     # Launch Python AI Backend Server
     if os.path.exists(os.path.join(backend_dir, "main.py")):
-        print("🔹 [1/2] Launching Python FastAPI Backend (Port 8000)...")
-        py_proc = subprocess.Popen(f'HF_HUB_OFFLINE=1 "{venv_python}" main.py', cwd=backend_dir, shell=True)
+        print(" [1/2] Launching Python FastAPI Backend (Port 8000)...")
+        py_proc = subprocess.Popen([venv_python, "main.py"], cwd=backend_dir, env=env)
         processes.append((py_proc, "Python Backend"))
     elif os.path.exists(os.path.join(root_dir, "app.py")):
-        print("🔹 [1/2] Launching Python REST Backend app.py (Port 8000)...")
-        py_proc = subprocess.Popen(f'HF_HUB_OFFLINE=1 "{venv_python}" app.py', cwd=root_dir, shell=True)
+        print(" [1/2] Launching Python REST Backend app.py (Port 8000)...")
+        py_proc = subprocess.Popen([venv_python, "app.py"], cwd=root_dir, env=env)
         processes.append((py_proc, "Python Backend"))
     time.sleep(1)
 

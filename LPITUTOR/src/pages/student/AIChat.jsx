@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { studentService } from '../../services/api';
 import MermaidDiagram from '../../components/MermaidDiagram';
+import { LLMMessageRenderer } from '../../components/LLMMessageRenderer';
 import { 
   Bot, 
   Send, 
@@ -27,10 +28,15 @@ const BACKEND_URL = `http://${window.location.hostname}:8000`;
 
 const resolveImageUrl = (urlOrPath) => {
   if (!urlOrPath) return '';
-  if (urlOrPath.startsWith('data:')) return urlOrPath;
-  if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) return urlOrPath;
+  let str = urlOrPath;
+  if (typeof urlOrPath === 'object') {
+    str = urlOrPath.url || urlOrPath.path || urlOrPath.src || '';
+  }
+  if (!str || typeof str !== 'string') return '';
+  if (str.startsWith('data:')) return str;
+  if (str.startsWith('http://') || str.startsWith('https://')) return str;
   // Relative path like /images/... or /media/... — prepend backend host
-  return `${BACKEND_URL}${urlOrPath.startsWith('/') ? '' : '/'}${urlOrPath}`;
+  return `${BACKEND_URL}${str.startsWith('/') ? '' : '/'}${str}`;
 };
 
 export const AIChat = () => {
@@ -462,14 +468,12 @@ export const AIChat = () => {
                   )}
 
                   {/* 4. MAIN LLM TUTOR EXPLANATION */}
-                  <div className="prose prose-invert max-w-none text-sm leading-relaxed text-slate-200 space-y-3 pt-2">
+                  <div className="space-y-3 pt-2">
                     <div className="font-bold text-base text-blue-300 flex items-center gap-2 border-b border-slate-800 pb-2">
                       <Bot className="w-5 h-5 text-blue-400" />
                       Personalized AI Explanation ({msg.level ? msg.level.toUpperCase() : 'BEGINNER'})
                     </div>
-                    <div className="whitespace-pre-line text-slate-300 font-sans">
-                      {msg.answer}
-                    </div>
+                    <LLMMessageRenderer content={msg.answer} />
                   </div>
 
                   {/* 5. CITED SOURCES ACCORDION */}

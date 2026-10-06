@@ -1,7 +1,14 @@
 import os
+import sys
 import time
 from typing import Dict, Any, List, Optional
 from pymongo import MongoClient, ASCENDING
+
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017/")
 DATABASE_NAME = "pragtutor"
@@ -72,10 +79,10 @@ def init_mongodb():
             print(f"Index creation note for student_progress: {e}")
 
         IS_MONGO_CONNECTED = True
-        print(f"✅ Connected to MongoDB ({DATABASE_NAME}) successfully.")
+        print(f"[OK] Connected to MongoDB ({DATABASE_NAME}) successfully.")
     except Exception as e:
         IS_MONGO_CONNECTED = False
-        print(f"⚠️ MongoDB connection notice: {e}. Fallback cache active.")
+        print(f"[NOTICE] MongoDB connection notice: {e}. Fallback cache active.")
 
 # Initialize on import
 init_mongodb()
@@ -297,7 +304,7 @@ def mark_topic_as_learned(student_id: str, topic: str, subject: Optional[str] = 
     rec["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     IN_MEMORY_PROGRESS[cache_key] = rec
 
-    print(f"✅ Topic '{topic_clean}' successfully marked as learned in student_progress for {student_id} ({norm_sub}).")
+    print(f"[OK] Topic '{topic_clean}' successfully marked as learned in student_progress for {student_id} ({norm_sub}).")
     return get_student(student_id, norm_sub)
 
 def add_completed_topic(student_id: str, topic: str, subject: Optional[str] = None) -> Dict[str, Any]:
