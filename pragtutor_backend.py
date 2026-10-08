@@ -25,15 +25,203 @@ TOP_K = 5
 # In-memory session tracking for generated quizzes (quiz_id -> private quiz metadata with correct answers)
 QUIZ_STORE: dict = {}
 
+def generate_fallback_quiz(target_topic: str, subject: str = "operating_systems"):
+    """
+    Generates a high-quality 5-question fallback quiz for the given target topic
+    in case the LLM response did not include a valid quiz JSON block.
+    Guarantees that an interactive quiz is ALWAYS displayed to the student.
+    """
+    topic_clean = (target_topic or "Operating Systems").strip()
+    topic_lower = topic_clean.lower()
+
+    if "deadlock" in topic_lower:
+        return [
+            {
+                "question": "Which of the following is a necessary condition for deadlock to occur?",
+                "options": ["Mutual exclusion", "Preemption", "Single threading", "Cache coherency"],
+                "correct_answer": "Mutual exclusion",
+                "explanation": "Mutual exclusion requires that at least one resource is held in a non-shareable mode."
+            },
+            {
+                "question": "What does the 'Hold and Wait' condition mean in deadlock theory?",
+                "options": [
+                    "A process holds at least one resource and waits for additional resources held by others",
+                    "A process releases all resources before requesting new ones",
+                    "The CPU holds execution while waiting for I/O",
+                    "A thread yields its time slice to main memory"
+                ],
+                "correct_answer": "A process holds at least one resource and waits for additional resources held by others",
+                "explanation": "Hold and wait means a process holding resources is waiting for additional resources held by other processes."
+            },
+            {
+                "question": "Which deadlock handling strategy prevents deadlocks by invalidating one of the 4 necessary conditions?",
+                "options": ["Deadlock Prevention", "Deadlock Detection", "Banker's Algorithm", "Ostrich Algorithm"],
+                "correct_answer": "Deadlock Prevention",
+                "explanation": "Deadlock prevention eliminates deadlock by ensuring at least one of the 4 necessary conditions cannot hold."
+            },
+            {
+                "question": "Which algorithm is commonly used for Deadlock Avoidance?",
+                "options": ["Banker's Algorithm", "Round Robin", "First-Come First-Served", "LRU Page Replacement"],
+                "correct_answer": "Banker's Algorithm",
+                "explanation": "Banker's Algorithm tests for safety by simulating the allocation of maximum predetermined amounts of resources."
+            },
+            {
+                "question": "What is a 'Circular Wait' condition?",
+                "options": [
+                    "A closed chain of processes exists such that each process holds a resource needed by the next",
+                    "A process loops infinitely waiting for user input",
+                    "The scheduler rotates CPU time in a circle",
+                    "Disk read heads rotate in a circular track"
+                ],
+                "correct_answer": "A closed chain of processes exists such that each process holds a resource needed by the next",
+                "explanation": "Circular wait occurs when process P0 waits for a resource held by P1, P1 waits for P2, and Pn waits for P0."
+            }
+        ]
+    elif "process" in topic_lower or "pcb" in topic_lower:
+        return [
+            {
+                "question": "What is a process in operating system terminology?",
+                "options": ["A program in execution", "A file saved on secondary disk storage", "A physical CPU core", "A compiler directive"],
+                "correct_answer": "A program in execution",
+                "explanation": "A process is a dynamic entity representing an active program currently executing in main memory."
+            },
+            {
+                "question": "Which data structure does the operating system use to store process state and metadata?",
+                "options": ["Process Control Block (PCB)", "Page Table Entry (PTE)", "File Allocation Table (FAT)", "Segment Register"],
+                "correct_answer": "Process Control Block (PCB)",
+                "explanation": "The PCB stores essential process information including PID, program counter, registers, and memory boundaries."
+            },
+            {
+                "question": "Which state transition occurs when a running process requests I/O operation?",
+                "options": ["Running -> Waiting/Blocked", "Running -> Ready", "Waiting -> Ready", "Ready -> Running"],
+                "correct_answer": "Running -> Waiting/Blocked",
+                "explanation": "When a process requests I/O, it transitions to the Waiting state until the I/O operation completes."
+            },
+            {
+                "question": "What component of the OS context switches between processes?",
+                "options": ["Dispatcher / CPU Scheduler", "Linker", "Loader", "Assembler"],
+                "correct_answer": "Dispatcher / CPU Scheduler",
+                "explanation": "The dispatcher saves the state of the currently running process and loads the saved state of the next selected process."
+            },
+            {
+                "question": "Which memory segment of a process stores local variables and function call frames?",
+                "options": ["Stack", "Heap", "Data Segment", "Text Segment"],
+                "correct_answer": "Stack",
+                "explanation": "The stack dynamically grows and shrinks to manage function parameters, return addresses, and local variables."
+            }
+        ]
+    elif "virtual memory" in topic_lower or "page" in topic_lower or "paging" in topic_lower:
+        return [
+            {
+                "question": "What primary advantage does Virtual Memory provide to an operating system?",
+                "options": [
+                    "Allows execution of processes larger than physical RAM",
+                    "Increases physical RAM hardware capacity",
+                    "Speeds up CPU clock cycle frequency",
+                    "Eliminates the need for secondary storage"
+                ],
+                "correct_answer": "Allows execution of processes larger than physical RAM",
+                "explanation": "Virtual memory decouples logical memory from physical memory, enabling execution of programs exceeding physical RAM."
+            },
+            {
+                "question": "What event occurs when a process accesses a page that is not currently present in physical RAM?",
+                "options": ["Page Fault", "Segmentation Fault", "Bus Error", "Stack Overflow"],
+                "correct_answer": "Page Fault",
+                "explanation": "A Page Fault trap is triggered when the valid bit in the page table entry indicates the page is not in physical memory."
+            },
+            {
+                "question": "Which component translates virtual logical addresses into physical RAM addresses?",
+                "options": ["Memory Management Unit (MMU)", "ALU", "Control Unit", "DMA Controller"],
+                "correct_answer": "Memory Management Unit (MMU)",
+                "explanation": "The MMU is hardware that performs real-time address translation using page tables and TLB."
+            },
+            {
+                "question": "What is the function of the Translation Lookaside Buffer (TLB)?",
+                "options": [
+                    "A high-speed hardware cache for page table translations",
+                    "A secondary disk partition for swap space",
+                    "A buffer for network data packets",
+                    "A queue for waiting I/O requests"
+                ],
+                "correct_answer": "A high-speed hardware cache for page table translations",
+                "explanation": "The TLB caches recent virtual-to-physical address mappings to bypass full page table memory lookups."
+            },
+            {
+                "question": "What phenomenon occurs when the system spends more time swapping pages than executing useful work?",
+                "options": ["Thrashing", "Belady's Anomaly", "Fragmentation", "Starvation"],
+                "correct_answer": "Thrashing",
+                "explanation": "Thrashing occurs when the total size of active working sets exceeds available physical memory, causing continuous page faults."
+            }
+        ]
+    else:
+        return [
+            {
+                "question": f"What is the primary core objective when studying {topic_clean}?",
+                "options": [
+                    f"Understanding how system resources and concepts for {topic_clean} are managed efficiently",
+                    f"Replacing hardware components related to {topic_clean}",
+                    f"Bypassing low-level operating system controls for {topic_clean}",
+                    f"Disabling concurrent execution during {topic_clean}"
+                ],
+                "correct_answer": f"Understanding how system resources and concepts for {topic_clean} are managed efficiently",
+                "explanation": f"Study of {topic_clean} focuses on resource allocation, correctness, efficiency, and OS abstractions."
+            },
+            {
+                "question": f"Which of the following best describes the key mechanism involved in {topic_clean}?",
+                "options": [
+                    f"Structured coordination between operating system services and physical hardware for {topic_clean}",
+                    f"Manual user intervention for every low-level operation in {topic_clean}",
+                    f"Storing all execution data exclusively in read-only memory",
+                    f"Executing instructions without allocating system registers"
+                ],
+                "correct_answer": f"Structured coordination between operating system services and physical hardware for {topic_clean}",
+                "explanation": f"The operating system manages {topic_clean} through kernel subsystems and hardware interfaces."
+            },
+            {
+                "question": f"What is a critical design requirement when implementing systems for {topic_clean}?",
+                "options": [
+                    "Ensuring safety, preventing race conditions or invalid states, and maximizing resource utilization",
+                    "Increasing power consumption without bounds",
+                    "Hardcoding static values for all dynamic memory allocations",
+                    "Restricting memory access to a single byte"
+                ],
+                "correct_answer": "Ensuring safety, preventing race conditions or invalid states, and maximizing resource utilization",
+                "explanation": f"Operating system abstractions for {topic_clean} must guarantee reliability, safety, and efficiency."
+            },
+            {
+                "question": f"How does the operating system kernel interact with concepts in {topic_clean}?",
+                "options": [
+                    f"By providing standardized system calls, abstractions, and management algorithms for {topic_clean}",
+                    f"By deleting process tables whenever {topic_clean} is referenced",
+                    f"By forcing all operations in {topic_clean} to run in unprivileged user mode only",
+                    f"By disabling hardware interrupts during {topic_clean} execution"
+                ],
+                "correct_answer": f"By providing standardized system calls, abstractions, and management algorithms for {topic_clean}",
+                "explanation": f"Kernels provide clean abstractions and protected system calls for managing {topic_clean}."
+            },
+            {
+                "question": f"What is a potential failure or performance bottleneck related to {topic_clean} if misconfigured?",
+                "options": [
+                    f"Resource contention, excessive overhead, or improper synchronization in {topic_clean}",
+                    f"Immediate physical damage to the monitor display",
+                    f"Automatic deletion of source code files on disk",
+                    f"Permanent loss of static BIOS firmware"
+                ],
+                "correct_answer": f"Resource contention, excessive overhead, or improper synchronization in {topic_clean}",
+                "explanation": f"Improper management of {topic_clean} can lead to performance degradation or resource conflicts."
+            }
+        ]
+
 def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_id: str = "STU001", subject: str = "operating_systems"):
     """
     Parses the 5-question quiz JSON block generated by the LLM.
     Supports object format {"quiz": [...]}, {"questions": [...]}, and direct array format [{"question": ...}, ...].
+    If no valid quiz JSON is found, automatically generates a topic-specific fallback quiz so an interactive quiz is ALWAYS provided.
     Strips the quiz JSON block and any section headings from the response text.
     Returns: (cleaned_explanation, safe_quiz_questions, quiz_id, quiz_error_message)
     """
     if not llm_response or not isinstance(llm_response, str):
-        return llm_response, None, None, "Quiz could not be generated for this response. Please continue learning."
+        llm_response = f"### Concept Overview: {target_topic}\n\nHere is your personalized explanation for **{target_topic}**."
 
     import re
     import time
@@ -49,114 +237,105 @@ def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_i
         if pos != -1:
             key_positions.append(pos)
 
-    if not key_positions:
-        cleaned = re.sub(r"```json[\s\S]*?```", "", llm_response, flags=re.IGNORECASE)
-        cleaned = re.sub(r"(?i)\n?\s*###?\s*Quiz[\s\S]*$", "", cleaned)
-        cleaned = re.sub(r"(?i)\n?\s*To help you check your understanding[\s\S]*$", "", cleaned)
-        return cleaned.strip(), None, None, "Quiz could not be generated for this response. Please continue learning."
-
-    key_idx = min(key_positions)
-
-    # Find outermost container opening '{' or '[' before key_idx by scanning backwards
-    start_idx = -1
-    pos = key_idx
-    while pos >= 0:
-        ch = llm_response[pos]
-        if ch in ('{', '['):
-            start_idx = pos
-            # Check if there is an enclosing outer '[' or '{' before start_idx with only whitespace/commas
-            prev_pos = pos - 1
-            while prev_pos >= 0:
-                prev_ch = llm_response[prev_pos]
-                if prev_ch in (' ', '\t', '\n', '\r', ','):
-                    prev_pos -= 1
-                    continue
-                elif prev_ch in ('[', '{'):
-                    start_idx = prev_pos
-                    pos = prev_pos
-                    break
-                else:
-                    break
-            if start_idx == pos:
-                break
-        pos -= 1
-
     json_str = None
     span_start = -1
     span_end = -1
 
-    if start_idx != -1:
-        stack = []
-        in_string = False
-        escape = False
-        end_idx = -1
+    if key_positions:
+        key_idx = min(key_positions)
 
-        for i in range(start_idx, len(llm_response)):
-            ch = llm_response[i]
-            if escape:
-                escape = False
-                continue
-            if ch == '\\':
-                escape = True
-                continue
-            if ch == '"':
-                in_string = not in_string
-                continue
-            if not in_string:
-                if ch in ('{', '['):
-                    stack.append(ch)
-                elif ch in ('}', ']'):
-                    if stack:
-                        top = stack[-1]
-                        if (ch == '}' and top == '{') or (ch == ']' and top == '['):
-                            stack.pop()
-                            if not stack:
-                                end_idx = i
-                                break
+        # Find outermost container opening '{' or '[' before key_idx by scanning backwards
+        start_idx = -1
+        pos = key_idx
+        while pos >= 0:
+            ch = llm_response[pos]
+            if ch in ('{', '['):
+                start_idx = pos
+                prev_pos = pos - 1
+                while prev_pos >= 0:
+                    prev_ch = llm_response[prev_pos]
+                    if prev_ch in (' ', '\t', '\n', '\r', ','):
+                        prev_pos -= 1
+                        continue
+                    elif prev_ch in ('[', '{'):
+                        start_idx = prev_pos
+                        pos = prev_pos
+                        break
+                    else:
+                        break
+                if start_idx == pos:
+                    break
+            pos -= 1
 
-        if end_idx != -1:
-            json_str = llm_response[start_idx : end_idx + 1]
-            span_start = start_idx
-            span_end = end_idx + 1
+        if start_idx != -1:
+            stack = []
+            in_string = False
+            escape = False
+            end_idx = -1
 
-    if not json_str:
-        cleaned = re.sub(r"```json[\s\S]*?```", "", llm_response, flags=re.IGNORECASE)
-        cleaned = re.sub(r"(?i)\n?\s*###?\s*Quiz[\s\S]*$", "", cleaned)
-        cleaned = re.sub(r"(?i)\n?\s*To help you check your understanding[\s\S]*$", "", cleaned)
-        return cleaned.strip(), None, None, "Quiz could not be generated for this response. Please continue learning."
+            for i in range(start_idx, len(llm_response)):
+                ch = llm_response[i]
+                if escape:
+                    escape = False
+                    continue
+                if ch == '\\':
+                    escape = True
+                    continue
+                if ch == '"':
+                    in_string = not in_string
+                    continue
+                if not in_string:
+                    if ch in ('{', '['):
+                        stack.append(ch)
+                    elif ch in ('}', ']'):
+                        if stack:
+                            top = stack[-1]
+                            if (ch == '}' and top == '{') or (ch == ']' and top == '['):
+                                stack.pop()
+                                if not stack:
+                                    end_idx = i
+                                    break
 
-    # Check for wrapping markdown code fences around span_start / span_end
-    prefix_check = llm_response[:span_start].rstrip()
-    if prefix_check.endswith("```json") or prefix_check.endswith("```"):
-        fence_start = prefix_check.rfind("```")
-        if fence_start != -1:
-            span_start = fence_start
+            if end_idx != -1:
+                json_str = llm_response[start_idx : end_idx + 1]
+                span_start = start_idx
+                span_end = end_idx + 1
 
-    suffix_check = llm_response[span_end:].lstrip()
-    if suffix_check.startswith("```"):
-        fence_end = llm_response.find("```", span_end)
-        if fence_end != -1:
-            span_end = fence_end + 3
+    # Clean explanation text
+    if json_str and span_start != -1 and span_end != -1:
+        # Check for wrapping markdown code fences around span_start / span_end
+        prefix_check = llm_response[:span_start].rstrip()
+        if prefix_check.endswith("```json") or prefix_check.endswith("```"):
+            fence_start = prefix_check.rfind("```")
+            if fence_start != -1:
+                span_start = fence_start
 
-    # Remove JSON block from explanation text
-    cleaned_explanation = (llm_response[:span_start] + llm_response[span_end:]).strip()
+        suffix_check = llm_response[span_end:].lstrip()
+        if suffix_check.startswith("```"):
+            fence_end = llm_response.find("```", span_end)
+            if fence_end != -1:
+                span_end = fence_end + 3
+
+        cleaned_explanation = (llm_response[:span_start] + llm_response[span_end:]).strip()
+    else:
+        cleaned_explanation = llm_response.strip()
 
     # Clean residual quiz section headings and intro text (e.g. "### Quiz", "To help you check your understanding...")
-    cleaned_explanation = re.sub(r"(?i)\n?\s*###?\s*Quiz[\s\S]*$", "", cleaned_explanation).strip()
+    cleaned_explanation = re.sub(r"(?i)\n?\s*#{1,3}\s*Quiz[\s\S]*$", "", cleaned_explanation).strip()
     cleaned_explanation = re.sub(r"(?i)\n?\s*To help you check your understanding[\s\S]*$", "", cleaned_explanation).strip()
     cleaned_explanation = re.sub(r"(?i)\n?\s*Here are (some|\d+)?\s*(questions|multiple-choice questions)[\s\S]*$", "", cleaned_explanation).strip()
     cleaned_explanation = re.sub(r"(?i)\n?\s*Test your understanding[\s\S]*$", "", cleaned_explanation).strip()
     cleaned_explanation = re.sub(r"```json[\s\S]*?```", "", cleaned_explanation, flags=re.IGNORECASE).strip()
 
-    # Fallback explanation text if cleaned_explanation is empty (e.g. LLM generated ONLY JSON)
+    # Fallback explanation text if cleaned_explanation is empty
     if not cleaned_explanation or len(cleaned_explanation) < 15:
         topic_disp = target_topic or "the requested topic"
         cleaned_explanation = f"### Concept Overview: {topic_disp}\n\nBelow is an interactive quiz generated specifically for **{topic_disp}** to test your understanding. Complete all 5 questions below!"
 
     def repair_and_parse_quiz_json(raw_str: str):
-        # 1. Clean trailing commas
+        if not raw_str:
+            return None
         cleaned = re.sub(r",\s*([\]\}])", r"\1", raw_str)
-        # 2. Fix missing commas between objects: } { -> }, {
         cleaned = re.sub(r"\}\s*\{", "}, {", cleaned)
 
         try:
@@ -169,8 +348,6 @@ def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_i
         except Exception:
             pass
 
-        # 3. Direct Regex Fallback Parser for LLM Quiz JSON
-        # Extracts all question blocks even if JSON syntax has missing commas or syntax errors!
         raw_questions = []
         block_splits = re.split(r"(?i)[\"']question[\"']\s*:", raw_str)
 
@@ -208,22 +385,19 @@ def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_i
 
         return None
 
-    data = repair_and_parse_quiz_json(json_str)
-
-    if not data:
-        print(f"Notice: Quiz JSON parsing failed even after repair attempts.")
-        return cleaned_explanation, None, None, "Quiz could not be generated for this response. Please continue learning."
-
     raw_quiz = None
-    if isinstance(data, list):
-        raw_quiz = data
-    elif isinstance(data, dict):
-        raw_quiz = data.get("quiz") or data.get("questions")
-        if not raw_quiz and "question" in data:
-            raw_quiz = [data]
+    if json_str:
+        data = repair_and_parse_quiz_json(json_str)
+        if isinstance(data, list):
+            raw_quiz = data
+        elif isinstance(data, dict):
+            raw_quiz = data.get("quiz") or data.get("questions")
+            if not raw_quiz and "question" in data:
+                raw_quiz = [data]
 
+    # GUARANTEE: If LLM failed to produce a valid quiz, generate high-quality fallback quiz for the topic
     if not raw_quiz or not isinstance(raw_quiz, list) or len(raw_quiz) == 0:
-        return cleaned_explanation, None, None, "Quiz could not be generated for this response. Please continue learning."
+        raw_quiz = generate_fallback_quiz(target_topic, subject)
 
     safe_questions = []
     private_questions = []
@@ -253,8 +427,22 @@ def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_i
             "explanation": expl
         })
 
+    # Extra safety check: if still empty for any reason, generate fallback
     if len(safe_questions) == 0:
-        return cleaned_explanation, None, None, "Quiz could not be generated for this response. Please continue learning."
+        fallback_raw = generate_fallback_quiz(target_topic, subject)
+        for idx, q_item in enumerate(fallback_raw):
+            safe_questions.append({
+                "id": idx,
+                "question": q_item["question"],
+                "options": q_item["options"]
+            })
+            private_questions.append({
+                "id": idx,
+                "question": q_item["question"],
+                "options": q_item["options"],
+                "correct_answer": q_item["correct_answer"],
+                "explanation": q_item["explanation"]
+            })
 
     quiz_id = f"quiz_{int(time.time() * 1000)}_{random.randint(1000, 9999)}"
 
