@@ -73,16 +73,50 @@ export const LLMMessageRenderer = ({ content }) => {
 
   let safeContent = typeof content === 'string' ? content : String(content);
 
-  // Fail-safe 1: Remove markdown code fences containing "quiz"
-  safeContent = safeContent.replace(/```json\s*\{[\s\S]*?"quiz"[\s\S]*?\}\s*```/gi, '');
+  // Fail-safe 1: Remove markdown code fences
   safeContent = safeContent.replace(/```json[\s\S]*?```/gi, '');
 
-  // Fail-safe 2: Remove any raw JSON block containing "quiz" using balanced brace matching
-  let quizIndex = safeContent.toLowerCase().indexOf('"quiz"');
-  while (quizIndex !== -1) {
-    let startIdx = safeContent.lastIndexOf('{', quizIndex);
+  // Fail-safe 2: Remove any JSON container (arrays or objects) containing quiz keys ("quiz", "questions", "question", "options")
+  const quizKeys = ['"quiz"', "'quiz'", '"questions"', "'questions'", '"question"', "'question'", '"options"', "'options'"];
+  let lower = safeContent.toLowerCase();
+
+  let foundKeyIdx = -1;
+  for (const k of quizKeys) {
+    let p = lower.indexOf(k);
+    if (p !== -1 && (foundKeyIdx === -1 || p < foundKeyIdx)) {
+      foundKeyIdx = p;
+    }
+  }
+
+  while (foundKeyIdx !== -1) {
+    // Scan backwards from foundKeyIdx to find outermost opening container '{' or '['
+    let startIdx = -1;
+    let pos = foundKeyIdx;
+    while (pos >= 0) {
+      let ch = safeContent[pos];
+      if (ch === '{' || ch === '[') {
+        startIdx = pos;
+        let prevPos = pos - 1;
+        while (prevPos >= 0) {
+          let prevCh = safeContent[prevPos];
+          if (prevCh === ' ' || prevCh === '\t' || prevCh === '\n' || prevCh === '\r' || prevCh === ',') {
+            prevPos--;
+            continue;
+          } else if (prevCh === '[' || prevCh === '{') {
+            startIdx = prevPos;
+            pos = prevPos;
+            break;
+          } else {
+            break;
+          }
+        }
+        if (startIdx === pos) break;
+      }
+      pos--;
+    }
+
     if (startIdx !== -1) {
-      let level = 0;
+      let stack = [];
       let endIdx = -1;
       let inString = false;
       let escape = false;
@@ -102,12 +136,18 @@ export const LLMMessageRenderer = ({ content }) => {
           continue;
         }
         if (!inString) {
-          if (ch === '{') level++;
-          else if (ch === '}') {
-            level--;
-            if (level === 0) {
-              endIdx = i;
-              break;
+          if (ch === '{' || ch === '[') {
+            stack.push(ch);
+          } else if (ch === '}' || ch === ']') {
+            if (stack.length > 0) {
+              let top = stack[stack.length - 1];
+              if ((ch === '}' && top === '{') || (ch === ']' && top === '[')) {
+                stack.pop();
+                if (stack.length === 0) {
+                  endIdx = i;
+                  break;
+                }
+              }
             }
           }
         }
@@ -121,8 +161,22 @@ export const LLMMessageRenderer = ({ content }) => {
     } else {
       break;
     }
-    quizIndex = safeContent.toLowerCase().indexOf('"quiz"');
+
+    lower = safeContent.toLowerCase();
+    foundKeyIdx = -1;
+    for (const k of quizKeys) {
+      let p = lower.indexOf(k);
+      if (p !== -1 && (foundKeyIdx === -1 || p < foundKeyIdx)) {
+        foundKeyIdx = p;
+      }
+    }
   }
+
+  // Fail-safe 3: Clean quiz section headings and intro lines
+  safeContent = safeContent.replace(/(?:\r?\n)?\s*#{1,3}\s*Quiz[\s\S]*$/i, '');
+  safeContent = safeContent.replace(/(?:\r?\n)?\s*To help you check your understanding[\s\S]*$/i, '');
+  safeContent = safeContent.replace(/(?:\r?\n)?\s*Here are (?:some|\d+)?\s*(?:questions|multiple-choice questions)[\s\S]*$/i, '');
+  safeContent = safeContent.replace(/(?:\r?\n)?\s*Test your understanding[\s\S]*$/i, '');
 
   safeContent = safeContent.trim();
 
