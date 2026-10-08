@@ -153,17 +153,66 @@ def parse_quiz_from_llm_response(llm_response: str, target_topic: str, student_i
         topic_disp = target_topic or "the requested topic"
         cleaned_explanation = f"### Concept Overview: {topic_disp}\n\nBelow is an interactive quiz generated specifically for **{topic_disp}** to test your understanding. Complete all 5 questions below!"
 
-    # Clean common LLM JSON syntax quirks (trailing commas)
-    cleaned_json_str = re.sub(r",\s*([\]\}])", r"\1", json_str)
+    def repair_and_parse_quiz_json(raw_str: str):
+        # 1. Clean trailing commas
+        cleaned = re.sub(r",\s*([\]\}])", r"\1", raw_str)
+        # 2. Fix missing commas between objects: } { -> }, {
+        cleaned = re.sub(r"\}\s*\{", "}, {", cleaned)
 
-    try:
-        data = json.loads(cleaned_json_str)
-    except Exception:
         try:
-            data = json.loads(json_str)
-        except Exception as e:
-            print(f"Notice: Quiz JSON parsing error: {e}")
-            return cleaned_explanation, None, None, "Quiz could not be generated for this response. Please continue learning."
+            return json.loads(cleaned)
+        except Exception:
+            pass
+
+        try:
+            return json.loads(raw_str)
+        except Exception:
+            pass
+
+        # 3. Direct Regex Fallback Parser for LLM Quiz JSON
+        # Extracts all question blocks even if JSON syntax has missing commas or syntax errors!
+        raw_questions = []
+        block_splits = re.split(r"(?i)[\"']question[\"']\s*:", raw_str)
+
+        if len(block_splits) > 1:
+            for block in block_splits[1:]:
+                q_text_match = re.search(r"^\s*[\"']([\s\S]*?)[\"']\s*,\s*[\"']", block)
+                if not q_text_match:
+                    q_text_match = re.search(r"^\s*[\"']([\s\S]*?)[\"']\s*,", block)
+
+                q_text = q_text_match.group(1).strip() if q_text_match else ""
+
+                opts_match = re.search(r"(?i)[\"']options[\"']\s*:\s*\[([\s\S]*?)\]", block)
+                options = []
+                if opts_match:
+                    opts_str = opts_match.group(1)
+                    options = re.findall(r"[\"']([\s\S]*?)[\"']", opts_str)
+                    options = [o.strip() for o in options if o.strip()]
+
+                corr_match = re.search(r"(?i)[\"']correct_answer[\"']\s*:\s*[\"']([\s\S]*?)[\"']", block)
+                corr_ans = corr_match.group(1).strip() if corr_match else (options[0] if options else "")
+
+                expl_match = re.search(r"(?i)[\"']explanation[\"']\s*:\s*[\"']([\s\S]*?)[\"']", block)
+                expl = expl_match.group(1).strip() if expl_match else ""
+
+                if q_text and options and len(options) >= 2:
+                    raw_questions.append({
+                        "question": q_text,
+                        "options": options,
+                        "correct_answer": corr_ans,
+                        "explanation": expl
+                    })
+
+        if raw_questions:
+            return {"quiz": raw_questions}
+
+        return None
+
+    data = repair_and_parse_quiz_json(json_str)
+
+    if not data:
+        print(f"Notice: Quiz JSON parsing failed even after repair attempts.")
+        return cleaned_explanation, None, None, "Quiz could not be generated for this response. Please continue learning."
 
     raw_quiz = None
     if isinstance(data, list):
