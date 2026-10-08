@@ -39,6 +39,322 @@ const resolveImageUrl = (urlOrPath) => {
   return `${BACKEND_URL}${str.startsWith('/') ? '' : '/'}${str}`;
 };
 
+const QuizCard = ({ quiz, quizId, topic, subject, quizMessage, onQuizCompleted }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [userAnswers, setUserAnswers] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [evalResult, setEvalResult] = useState(null);
+  const [validationError, setValidationError] = useState(null);
+  const [error, setError] = useState(null);
+
+  if (!quiz || !Array.isArray(quiz) || quiz.length === 0) {
+    return (
+      <div className="pt-3 border-t border-slate-800/80">
+        <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+          <HelpCircle className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{quizMessage || "Quiz could not be generated for this response. Please continue learning."}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQ = quiz[currentStep] || quiz[0];
+  const totalQuestions = quiz.length;
+  const isLastQuestion = currentStep === totalQuestions - 1;
+
+  const handleOptionSelect = (optIdx) => {
+    setUserAnswers(prev => ({ ...prev, [currentStep]: optIdx }));
+    setValidationError(null);
+  };
+
+  const handleNext = () => {
+    if (userAnswers[currentStep] === undefined || userAnswers[currentStep] === null) {
+      setValidationError("Please select an answer before continuing.");
+      return;
+    }
+    setValidationError(null);
+    if (!isLastQuestion) {
+      setCurrentStep(prev => Math.min(totalQuestions - 1, prev + 1));
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setValidationError(null);
+      setCurrentStep(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (userAnswers[currentStep] === undefined || userAnswers[currentStep] === null) {
+      setValidationError("Please select an answer before continuing.");
+      return;
+    }
+    if (!quizId) return;
+
+    setSubmitting(true);
+    setError(null);
+    setValidationError(null);
+    try {
+      const studentUser = JSON.parse(localStorage.getItem('pragtutor_user') || '{}');
+      const studentId = studentUser.id || 'STU001';
+      
+      const answersArray = quiz.map((_, idx) => userAnswers[idx] !== undefined ? userAnswers[idx] : null);
+      
+      const result = await studentService.evaluateQuiz(quizId, answersArray, studentId, subject, topic);
+      setEvalResult(result);
+
+      if (result && result.passed && onQuizCompleted) {
+        onQuizCompleted(topic);
+      }
+    } catch (err) {
+      console.error('Quiz evaluation error:', err);
+      setError("Failed to evaluate quiz answers. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRetry = () => {
+    setCurrentStep(0);
+    setUserAnswers({});
+    setEvalResult(null);
+    setValidationError(null);
+    setError(null);
+  };
+
+  const targetTopicName = topic || 'Operating System';
+
+  return (
+    <div className="pt-4 border-t border-slate-800/80 space-y-4">
+      {/* Quiz Header & Topic Title */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-2.5">
+          <span className="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30">
+            <HelpCircle className="w-5 h-5" />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-amber-200 uppercase tracking-wide flex items-center gap-2">
+              Test Your Understanding
+            </h3>
+            <p className="text-xs text-slate-300">
+              Topic: <span className="text-amber-300 font-bold">{targetTopicName}</span>
+            </p>
+          </div>
+        </div>
+
+        {!evalResult && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl bg-slate-900 border border-amber-500/30 text-amber-300">
+              Question {currentStep + 1} of {totalQuestions}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* BEFORE SUBMISSION: STEP-BY-STEP QUESTION VIEW (ONE QUESTION AT A TIME) */}
+      {!evalResult ? (
+        <div className="space-y-4">
+          {/* Progress Bar */}
+          <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+            <div 
+              className="bg-gradient-to-r from-amber-500 to-orange-500 h-full rounded-full transition-all duration-300"
+              style={{ width: `${((currentStep + 1) / totalQuestions) * 100}%` }}
+            />
+          </div>
+
+          {/* Current Question Card */}
+          <div className="p-5 bg-slate-900/90 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+            <div className="text-sm font-bold text-slate-100 flex items-start gap-2.5 leading-relaxed">
+              <span className="px-2.5 py-0.5 rounded-lg bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono text-xs shrink-0 mt-0.5">
+                Q{currentStep + 1}
+              </span>
+              <span>{currentQ.question}</span>
+            </div>
+
+            {/* 4 Selectable Option Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {currentQ.options && currentQ.options.map((optText, optIdx) => {
+                const isSelected = userAnswers[currentStep] === optIdx;
+                const optionLabel = String.fromCharCode(65 + optIdx);
+                return (
+                  <button
+                    key={optIdx}
+                    type="button"
+                    onClick={() => handleOptionSelect(optIdx)}
+                    className={`p-3.5 rounded-xl text-xs text-left font-medium border transition-all flex items-center gap-3 cursor-pointer ${
+                      isSelected
+                        ? 'bg-blue-600/20 text-blue-100 border-blue-500 shadow-md shadow-blue-500/10 ring-1 ring-blue-500/50'
+                        : 'bg-slate-950 hover:bg-slate-850 text-slate-300 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className={`w-6 h-6 rounded-full border text-[11px] font-bold flex items-center justify-center shrink-0 transition-colors ${
+                      isSelected ? 'border-blue-400 bg-blue-500 text-white' : 'border-slate-700 text-slate-400 bg-slate-900'
+                    }`}>
+                      {optionLabel}
+                    </span>
+                    <span className="leading-snug flex-1">{optText}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Validation Warning */}
+            {validationError && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-300 font-medium flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{validationError}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Control Buttons */}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={currentStep === 0 || submitting}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-slate-300 hover:text-white border border-slate-800 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <span>← Back</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={isLastQuestion ? handleSubmit : handleNext}
+              disabled={submitting}
+              className={`px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer ${
+                isLastQuestion
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-emerald-500/20'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20'
+              }`}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Evaluating...</span>
+                </>
+              ) : isLastQuestion ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Finish Quiz</span>
+                </>
+              ) : (
+                <>
+                  <span>Next →</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* AFTER SUBMISSION: RESULT VIEW & EXPLANATIONS */
+        <div className="space-y-4">
+          {/* Score Banner */}
+          <div className={`p-5 rounded-2xl border space-y-3 shadow-xl ${
+            evalResult.passed
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 block mb-0.5">Quiz Completed</span>
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  {evalResult.passed ? <CheckCircle2 className="w-6 h-6 text-emerald-400" /> : <AlertTriangle className="w-6 h-6 text-amber-400" />}
+                  <span>Score: {evalResult.score} / {evalResult.total} ({evalResult.percentage}%)</span>
+                </h3>
+              </div>
+              <span className={`px-4 py-1.5 rounded-xl text-xs font-extrabold uppercase tracking-wide border shadow-md ${
+                evalResult.passed
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+              }`}>
+                {evalResult.passed ? '🎉 Topic Learned' : 'Topic Not Learned Yet'}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+              {evalResult.passed
+                ? `You have successfully completed this topic '${targetTopicName}'.`
+                : `Score is ${evalResult.percentage}% (requires > 70% to complete). Review the incorrect concepts below and try again.`}
+            </p>
+          </div>
+
+          {/* Detailed Question Review & Explanations */}
+          <div className="space-y-3 pt-1">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-amber-400" />
+              Review Your Answers
+            </h4>
+
+            {evalResult.results && evalResult.results.map((res, rIdx) => (
+              <div key={rIdx} className={`p-4 rounded-2xl border space-y-2.5 transition-all ${
+                res.is_correct
+                  ? 'bg-emerald-500/5 border-emerald-500/20'
+                  : 'bg-rose-500/5 border-rose-500/20'
+              }`}>
+                <div className="flex items-start justify-between gap-2 font-bold text-xs">
+                  <span className="text-slate-200 leading-snug">
+                    Question {rIdx + 1}: {res.question}
+                  </span>
+                  <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold shrink-0 ${
+                    res.is_correct ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                  }`}>
+                    {res.is_correct ? '✓ Correct' : '✗ Incorrect'}
+                  </span>
+                </div>
+
+                {!res.is_correct ? (
+                  <div className="space-y-2 text-xs pt-2 border-t border-slate-800/80">
+                    <div className="text-rose-300 font-medium bg-rose-950/30 p-2.5 rounded-xl border border-rose-500/20">
+                      <span className="font-semibold text-slate-400">Your answer: </span>
+                      {res.student_answer}
+                    </div>
+                    <div className="text-emerald-300 font-medium bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-500/20">
+                      <span className="font-semibold text-slate-400">Correct answer: </span>
+                      {res.correct_answer}
+                    </div>
+                    {res.explanation && (
+                      <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-slate-300 leading-relaxed">
+                        <span className="font-bold text-blue-400">Explanation: </span>
+                        {res.explanation}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-emerald-400 font-medium pt-1 border-t border-slate-800/50">
+                    ✓ Question {rIdx + 1} — Correct
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Retry Quiz Action */}
+          <div className="pt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-300 hover:text-amber-200 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md"
+            >
+              <span>🔄 Retry Quiz</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const AIChat = () => {
   const [searchParams] = useSearchParams();
   const initialSubject = searchParams.get('subject') || 'operating_systems';
@@ -178,6 +494,9 @@ export const AIChat = () => {
         images: res.retrieved_images || res.images || [],
         retrievedImages: res.retrieved_images || res.images || [],
         generatedVisual: res.generated_visual || null,
+        quiz: res.quiz || null,
+        quizId: res.quiz_id || null,
+        quizMessage: res.quiz_message || null,
         answer: isKbUnavailable 
           ? (res.message || "PDFs have not been uploaded by your teachers for this subject yet.") 
           : (res.answer || res.llm_response || "Explanation generated."),
@@ -475,6 +794,20 @@ export const AIChat = () => {
                     </div>
                     <LLMMessageRenderer content={msg.answer} />
                   </div>
+
+                  {/* 4.5 5-QUESTION PERSONALIZED QUIZ (APPEARS AFTER LLM EXPLANATION) */}
+                  {!msg.isKbUnavailable && (
+                    <QuizCard
+                      quiz={msg.quiz}
+                      quizId={msg.quizId}
+                      topic={msg.topic}
+                      subject={subject}
+                      quizMessage={msg.quizMessage}
+                      onQuizCompleted={(completedTopic) => {
+                        setLearnedTopics(prev => new Set([...prev, completedTopic, msg.rawTopic, completedTopic.toLowerCase(), completedTopic.replace('_', ' ')]));
+                      }}
+                    />
+                  )}
 
                   {/* 5. CITED SOURCES ACCORDION */}
                   {msg.sources.length > 0 && (

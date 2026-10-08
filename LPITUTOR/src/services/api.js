@@ -135,6 +135,16 @@ export const studentService = {
       topic
     });
     return res.data;
+  },
+  evaluateQuiz: async (quizId, answers, studentId = 'STU001', subject = 'operating_systems', topic = '') => {
+    const res = await api.post('/quiz/evaluate', {
+      quiz_id: quizId,
+      answers,
+      student_id: studentId,
+      subject,
+      topic
+    });
+    return res.data;
   }
 };
 

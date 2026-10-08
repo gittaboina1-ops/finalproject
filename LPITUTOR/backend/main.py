@@ -376,6 +376,13 @@ class TeacherStatusUpdate(BaseModel):
 class TeacherSubjectsUpdate(BaseModel):
     subjects: List[str]
 
+class QuizEvaluateRequest(BaseModel):
+    quiz_id: str
+    answers: List[Any]
+    student_id: Optional[str] = "STU001"
+    subject: Optional[str] = "operating_systems"
+    topic: Optional[str] = None
+
 # ------------------------------------------------------------------
 # Health Check Endpoint
 # ------------------------------------------------------------------
@@ -1239,9 +1246,23 @@ def chat_answer(req: QueryRequest):
         "images": result.get("retrieved_images") or [],
         "retrieved_images": result.get("retrieved_images") or [],
         "generated_visual": result.get("generated_visual"),
+        "quiz": result.get("quiz"),
+        "quiz_id": result.get("quiz_id"),
+        "quiz_message": result.get("quiz_message"),
         "status": result.get("status", "success"),
         "message": result.get("message")
     }
+
+@app.post("/api/quiz/evaluate")
+@app.post("/api/student/evaluate_quiz")
+def evaluate_quiz_endpoint(req: QuizEvaluateRequest):
+    return pragtutor_backend.evaluate_quiz(
+        quiz_id=req.quiz_id,
+        answers=req.answers,
+        student_id=req.student_id or "STU001",
+        subject=req.subject or "operating_systems",
+        topic=req.topic
+    )
 
 @app.get("/api/student/history")
 def get_student_history(student_id: str = "STU001", subject: Optional[str] = "operating_systems"):

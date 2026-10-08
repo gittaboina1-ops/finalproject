@@ -354,6 +354,23 @@ class PragTutorRequestHandler(BaseHTTPRequestHandler):
                 "known_topics": updated_stu.get("known_topics", [])
             })
 
+        if path in ["/api/quiz/evaluate", "/api/student/evaluate_quiz"]:
+            from pragtutor_backend import evaluate_quiz
+            quiz_id = payload.get("quiz_id", "")
+            answers = payload.get("answers", [])
+            student_id = payload.get("student_id", "STU001")
+            subject = payload.get("subject", "operating_systems")
+            topic = payload.get("topic")
+
+            res = evaluate_quiz(
+                quiz_id=quiz_id,
+                answers=answers,
+                student_id=student_id,
+                subject=subject,
+                topic=topic
+            )
+            return self._send_json(res)
+
         valid_query_paths = ["/api/tutor", "/api/process_query", "/api/student/query", "/api/chat/answer", "/api/chat/question"]
         if path in valid_query_paths:
             query = payload.get("query") or payload.get("question")
@@ -387,6 +404,9 @@ class PragTutorRequestHandler(BaseHTTPRequestHandler):
                         "learning_path": context.get("learning_path", []),
                         "sources": context.get("retrieved_content") or [],
                         "images": context.get("retrieved_images") or [],
+                        "quiz": context.get("quiz"),
+                        "quiz_id": context.get("quiz_id"),
+                        "quiz_message": context.get("quiz_message"),
                         "status": context.get("status", "success")
                     }
                 else:

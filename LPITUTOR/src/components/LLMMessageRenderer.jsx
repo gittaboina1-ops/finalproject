@@ -71,6 +71,61 @@ const InlineCode = ({ node, className, children, ...props }) => {
 export const LLMMessageRenderer = ({ content }) => {
   if (!content) return null;
 
+  let safeContent = typeof content === 'string' ? content : String(content);
+
+  // Fail-safe 1: Remove markdown code fences containing "quiz"
+  safeContent = safeContent.replace(/```json\s*\{[\s\S]*?"quiz"[\s\S]*?\}\s*```/gi, '');
+  safeContent = safeContent.replace(/```json[\s\S]*?```/gi, '');
+
+  // Fail-safe 2: Remove any raw JSON block containing "quiz" using balanced brace matching
+  let quizIndex = safeContent.toLowerCase().indexOf('"quiz"');
+  while (quizIndex !== -1) {
+    let startIdx = safeContent.lastIndexOf('{', quizIndex);
+    if (startIdx !== -1) {
+      let level = 0;
+      let endIdx = -1;
+      let inString = false;
+      let escape = false;
+
+      for (let i = startIdx; i < safeContent.length; i++) {
+        let ch = safeContent[i];
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (ch === '\\') {
+          escape = true;
+          continue;
+        }
+        if (ch === '"') {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (ch === '{') level++;
+          else if (ch === '}') {
+            level--;
+            if (level === 0) {
+              endIdx = i;
+              break;
+            }
+          }
+        }
+      }
+
+      if (endIdx !== -1) {
+        safeContent = safeContent.slice(0, startIdx) + safeContent.slice(endIdx + 1);
+      } else {
+        safeContent = safeContent.slice(0, startIdx);
+      }
+    } else {
+      break;
+    }
+    quizIndex = safeContent.toLowerCase().indexOf('"quiz"');
+  }
+
+  safeContent = safeContent.trim();
+
   return (
     <div className="llm-message-content max-w-none text-slate-200 leading-relaxed text-sm sm:text-base font-sans space-y-3">
       <ReactMarkdown
@@ -208,7 +263,7 @@ export const LLMMessageRenderer = ({ content }) => {
           code: InlineCode,
         }}
       >
-        {content}
+        {safeContent}
       </ReactMarkdown>
     </div>
   );

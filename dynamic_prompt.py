@@ -259,18 +259,36 @@ TEACHING INSTRUCTIONS
 
 14. If explaining a process, state machine, algorithm, architecture,
     or sequence would benefit from a visual representation, append an
-    educational Mermaid flowchart at the very end of your response inside a
-    ```mermaid code block (e.g. flowchart TD or flowchart LR). Ensure all node
-    labels containing special characters are enclosed in double quotes.
-    Note: Retrieved PDF course figures take primary precedence; generated
-    diagrams are supplemental.
+    educational Mermaid flowchart inside a ```mermaid code block (e.g. flowchart TD or flowchart LR).
+    Ensure all node labels containing special characters are enclosed in double quotes.
+
+15. At the very end of your response, output a single ```json code block containing exactly 5 multiple-choice questions testing the student's understanding of the target topic ({topic}) and the concepts explained in your response.
+
+The JSON structure MUST strictly follow this format:
+```json
+{{
+  "quiz": [
+    {{
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "Exact text of the correct option matching one of the options",
+      "explanation": "Short educational explanation of why this answer is correct."
+    }}
+  ]
+}}
+```
+Rules for quiz:
+- Generate exactly 5 questions.
+- Each question must have exactly 4 options.
+- The questions must be directly based on the target topic ({topic}) and what you just explained.
+- Ensure "correct_answer" exactly matches one of the 4 strings in "options".
 
 
 ============================================================
 FINAL RESPONSE
 ============================================================
 
-Provide a clear, structured, level-appropriate explanation for the student.
+Provide a clear, structured, level-appropriate explanation for the student, followed by the ```json quiz block.
 """
 
     return prompt
