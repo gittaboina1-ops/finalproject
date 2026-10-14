@@ -1176,6 +1176,33 @@ def mark_student_topic_learned(req: MarkLearnedRequest):
         "known_topics": updated_student.get("known_topics", [])
     }
 
+class MarkSkippedRequest(BaseModel):
+    student_id: str = "STU001"
+    subject: str = "operating_systems"
+    topic: str
+
+@app.post("/api/student/skip_topic")
+@app.post("/api/student/mark_skipped")
+def mark_student_topic_skipped(req: MarkSkippedRequest):
+    from student_database import mark_topic_as_skipped
+    updated_student = mark_topic_as_skipped(req.student_id, req.topic, subject=req.subject)
+
+    ACTIVITY_LOGS.insert(0, {
+        "id": len(ACTIVITY_LOGS) + 1,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M"),
+        "user": f"Student {req.student_id}",
+        "role": "STUDENT",
+        "action": f"Marked topic for later (skipped): {req.topic} ({req.subject})"
+    })
+
+    return {
+        "status": "success",
+        "message": f"Successfully marked '{req.topic}' for later in {req.subject}.",
+        "student_id": req.student_id,
+        "subject": req.subject,
+        "skipped_topics": updated_student.get("skipped_topics", [])
+    }
+
 @app.get("/api/student/subjects")
 def get_student_subjects():
     subjects = load_subjects()
@@ -1249,6 +1276,9 @@ def chat_answer(req: QueryRequest):
         "quiz": result.get("quiz"),
         "quiz_id": result.get("quiz_id"),
         "quiz_message": result.get("quiz_message"),
+        "next_topic": result.get("next_topic"),
+        "next_topic_name": result.get("next_topic_name"),
+        "next_topic_description": result.get("next_topic_description"),
         "status": result.get("status", "success"),
         "message": result.get("message")
     }
@@ -1272,6 +1302,7 @@ def get_student_history(student_id: str = "STU001", subject: Optional[str] = "op
         "subject": subject,
         "known_topics": data.get("known_topics", []),
         "completed_topics": data.get("completed_topics", []),
+        "skipped_topics": data.get("skipped_topics", []),
         "in_progress_topics": data.get("in_progress_topics", []),
         "topic_progress": data.get("topic_progress", {}),
         "recent_queries": data.get("query_history", [])

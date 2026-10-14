@@ -21,16 +21,16 @@ const CodeBlock = ({ children }) => {
   };
 
   return (
-    <div className="my-4 rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shadow-lg font-mono text-xs sm:text-sm">
+    <div className="my-4 rounded-xl border border-slate-300 bg-slate-900 overflow-hidden shadow-sm font-mono text-xs sm:text-sm">
       {/* Code Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-900/90 border-b border-slate-800 text-slate-400 text-xs">
-        <span className="font-mono text-slate-300 font-semibold uppercase tracking-wider text-[11px]">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-800 border-b border-slate-700 text-slate-300 text-xs">
+        <span className="font-mono text-slate-200 font-semibold uppercase tracking-wider text-[11px]">
           {language || 'code'}
         </span>
         <button
           onClick={handleCopy}
           type="button"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors text-[11px] font-medium border border-slate-700/50"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 hover:text-white transition-colors text-[11px] font-medium border border-slate-600"
         >
           {copied ? (
             <>
@@ -46,7 +46,7 @@ const CodeBlock = ({ children }) => {
         </button>
       </div>
       {/* Code Content */}
-      <div className="p-4 overflow-x-auto text-slate-200 leading-relaxed font-mono">
+      <div className="p-4 overflow-x-auto text-slate-100 leading-relaxed font-mono">
         <pre className="m-0 font-mono">
           <code className={className}>
             {codeString}
@@ -60,7 +60,7 @@ const CodeBlock = ({ children }) => {
 const InlineCode = ({ node, className, children, ...props }) => {
   return (
     <code
-      className="px-1.5 py-0.5 mx-0.5 text-xs font-mono rounded bg-slate-800/90 text-blue-300 border border-slate-700/60 inline-block align-middle font-medium"
+      className="px-1.5 py-0.5 mx-0.5 text-xs font-mono rounded bg-slate-100 text-blue-700 border border-slate-200 inline-block align-middle font-medium"
       {...props}
     >
       {children}
@@ -181,87 +181,87 @@ export const LLMMessageRenderer = ({ content }) => {
   safeContent = safeContent.trim();
 
   return (
-    <div className="llm-message-content max-w-none text-slate-200 leading-relaxed text-sm sm:text-base font-sans space-y-3">
+    <div className="llm-message-content max-w-none text-slate-800 leading-relaxed text-sm sm:text-base font-sans space-y-3">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1({ children }) {
             return (
-              <h1 className="text-xl sm:text-2xl font-extrabold text-white mt-6 mb-3 pb-2 border-b border-slate-800 flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-6 mb-3 pb-2 border-b border-slate-200 flex items-center gap-2">
                 {children}
               </h1>
             );
           },
           h2({ children }) {
             return (
-              <h2 className="text-lg sm:text-xl font-bold text-blue-300 mt-5 mb-2.5 pb-1 border-b border-slate-800/80">
+              <h2 className="text-lg sm:text-xl font-bold text-blue-700 mt-5 mb-2.5 pb-1 border-b border-slate-200">
                 {children}
               </h2>
             );
           },
           h3({ children }) {
             return (
-              <h3 className="text-base sm:text-lg font-semibold text-indigo-300 mt-4 mb-2">
+              <h3 className="text-base sm:text-lg font-semibold text-indigo-800 mt-4 mb-2">
                 {children}
               </h3>
             );
           },
           h4({ children }) {
             return (
-              <h4 className="text-sm sm:text-base font-semibold text-slate-200 mt-3 mb-1.5">
+              <h4 className="text-sm sm:text-base font-semibold text-slate-900 mt-3 mb-1.5">
                 {children}
               </h4>
             );
           },
           p({ children }) {
             return (
-              <p className="text-slate-300 leading-relaxed mb-3.5 last:mb-0 text-sm sm:text-base">
+              <p className="text-slate-700 leading-relaxed mb-3.5 last:mb-0 text-sm sm:text-base">
                 {children}
               </p>
             );
           },
           ul({ children }) {
             return (
-              <ul className="list-disc list-outside ml-5 space-y-1.5 my-3 text-slate-300 text-sm sm:text-base marker:text-blue-400">
+              <ul className="list-disc list-outside ml-5 space-y-1.5 my-3 text-slate-700 text-sm sm:text-base marker:text-blue-600">
                 {children}
               </ul>
             );
           },
           ol({ children }) {
             return (
-              <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3 text-slate-300 text-sm sm:text-base marker:text-blue-400 marker:font-bold">
+              <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3 text-slate-700 text-sm sm:text-base marker:text-blue-600 marker:font-bold">
                 {children}
               </ol>
             );
           },
           li({ children }) {
             return (
-              <li className="pl-1 leading-relaxed text-slate-300">
+              <li className="pl-1 leading-relaxed text-slate-700">
                 {children}
               </li>
             );
           },
           strong({ children }) {
             return (
-              <strong className="font-bold text-white bg-blue-500/10 px-1 py-0.5 rounded text-blue-200 border border-blue-500/20">
+              <strong className="font-bold text-slate-900 bg-blue-50 px-1 py-0.5 rounded text-blue-900 border border-blue-200">
                 {children}
               </strong>
             );
           },
           em({ children }) {
-            return <em className="italic text-slate-300">{children}</em>;
+            return <em className="italic text-slate-800">{children}</em>;
           },
           blockquote({ children }) {
             return (
-              <blockquote className="border-l-4 border-blue-500 bg-blue-950/20 px-4 py-3 my-4 rounded-r-2xl text-slate-300 italic border-y border-r border-slate-800/60 shadow-inner">
+              <blockquote className="border-l-4 border-blue-500 bg-blue-50/60 px-4 py-3 my-4 rounded-r-2xl text-slate-700 italic border-y border-r border-slate-200 shadow-xs">
                 {children}
               </blockquote>
             );
           },
           table({ children }) {
             return (
-              <div className="overflow-x-auto my-4 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-lg">
-                <table className="w-full text-left text-xs sm:text-sm text-slate-200 border-collapse">
+              <div className="overflow-x-auto my-4 rounded-xl border border-slate-200 bg-white shadow-xs">
+                <table className="w-full text-left text-xs sm:text-sm text-slate-800 border-collapse">
                   {children}
                 </table>
               </div>
@@ -269,31 +269,31 @@ export const LLMMessageRenderer = ({ content }) => {
           },
           thead({ children }) {
             return (
-              <thead className="bg-slate-900 text-blue-300 font-semibold border-b border-slate-800 uppercase tracking-wider text-[11px]">
+              <thead className="bg-slate-50 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
                 {children}
               </thead>
             );
           },
           tbody({ children }) {
-            return <tbody className="divide-y divide-slate-800/60">{children}</tbody>;
+            return <tbody className="divide-y divide-slate-200">{children}</tbody>;
           },
           tr({ children }) {
             return (
-              <tr className="hover:bg-slate-800/30 transition-colors">
+              <tr className="hover:bg-slate-50/60 transition-colors">
                 {children}
               </tr>
             );
           },
           th({ children }) {
             return (
-              <th className="px-4 py-3 font-bold text-blue-300 border-b border-slate-800">
+              <th className="px-4 py-3 font-bold text-slate-800 border-b border-slate-200">
                 {children}
               </th>
             );
           },
           td({ children }) {
             return (
-              <td className="px-4 py-2.5 text-slate-300 border-b border-slate-800/60">
+              <td className="px-4 py-2.5 text-slate-700 border-b border-slate-100">
                 {children}
               </td>
             );
@@ -304,14 +304,14 @@ export const LLMMessageRenderer = ({ content }) => {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline underline-offset-4 font-medium transition-colors"
+                className="text-blue-600 hover:text-blue-700 underline underline-offset-4 font-medium transition-colors"
               >
                 {children}
               </a>
             );
           },
           hr() {
-            return <hr className="my-6 border-t border-slate-800" />;
+            return <hr className="my-6 border-t border-slate-200" />;
           },
           pre: CodeBlock,
           code: InlineCode,

@@ -1089,6 +1089,98 @@ def display_result(
 
 
 # ============================================================
+# GET NEXT TOPIC RECOMMENDATION
+# ============================================================
+# Recommends the next appropriate topic using existing prerequisite
+# relationships, curriculum unit sequences, and student completed progress.
+
+def get_next_topic_recommendation(
+    topic_name,
+    subject_id="operating_systems",
+    student_id="STU001"
+):
+    norm_sub = normalize_subject_id(subject_id)
+    course_data = load_course_topics(norm_sub)
+    graph = build_graph(course_data)
+    topic_lookup = create_topic_lookup(graph)
+
+    canonical_topic = find_canonical_topic(topic_name, graph, topic_lookup)
+    student = get_student(student_id, subject=norm_sub) or {}
+    known_topics = get_known_topics(student, graph, topic_lookup)
+
+    units = course_data.get("units", {})
+    ordered_topics = []
+    topic_meta = {}
+    for u_id, u_data in units.items():
+        topics_dict = u_data.get("topics", {})
+        for t_k, t_v in topics_dict.items():
+            ordered_topics.append(t_k)
+            if isinstance(t_v, dict):
+                topic_meta[t_k] = t_v
+
+    rec_topic = None
+
+    # Priority A: Direct successor topics in prerequisite DAG that student has not yet completed
+    if canonical_topic:
+        successors = [t for t, d in graph.items() if canonical_topic in d.get("prerequisites", [])]
+        uncompleted_succs = [t for t in successors if t not in known_topics]
+        if uncompleted_succs:
+            rec_topic = uncompleted_succs[0]
+        elif successors:
+            rec_topic = successors[0]
+
+    # Priority B: Next topic in curriculum sequence within units
+    if not rec_topic and canonical_topic and canonical_topic in ordered_topics:
+        idx = ordered_topics.index(canonical_topic)
+        for cand in ordered_topics[idx + 1:]:
+            if cand not in known_topics:
+                rec_topic = cand
+                break
+        if not rec_topic and idx + 1 < len(ordered_topics):
+            rec_topic = ordered_topics[idx + 1]
+
+    # Priority C: Global prerequisites.json next_topics definition
+    if not rec_topic:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        prereqs_path = os.path.join(base_dir, "prerequisites.json")
+        if os.path.exists(prereqs_path):
+            try:
+                with open(prereqs_path, "r", encoding="utf-8") as f:
+                    pj = json.load(f).get("topics", {})
+                clean = (topic_name or "").lower().strip().replace("_", " ")
+                if clean in pj and pj[clean].get("next_topics"):
+                    for nt in pj[clean]["next_topics"]:
+                        if nt not in known_topics:
+                            rec_topic = nt
+                            break
+            except Exception:
+                pass
+
+    # Priority D: First uncompleted topic in the subject course
+    if not rec_topic:
+        for cand in ordered_topics:
+            if cand not in known_topics:
+                rec_topic = cand
+                break
+
+    # Fallback: First topic in course sequence
+    if not rec_topic and ordered_topics:
+        rec_topic = ordered_topics[0]
+
+    if not rec_topic:
+        return None
+
+    desc = topic_meta.get(rec_topic, {}).get("description", "")
+    disp_name = display_topic(rec_topic).title()
+
+    return {
+        "topic": rec_topic,
+        "topic_name": disp_name,
+        "description": desc
+    }
+
+
+# ============================================================
 # MAIN
 # ============================================================
 # Runs the prerequisite engine manually from the terminal.

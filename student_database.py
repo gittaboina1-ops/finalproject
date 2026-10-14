@@ -111,6 +111,7 @@ def get_student_progress(student_id: str, subject: Optional[str] = None) -> Dict
         "subject": norm_sub,
         "known_topics": [],
         "completed_topics": [],
+        "skipped_topics": [],
         "in_progress_topics": [],
         "topic_progress": {},
         "query_history": [],
@@ -149,6 +150,7 @@ def update_student_progress_query(student_id: str, subject: Optional[str], query
                     "$setOnInsert": {
                         "known_topics": [],
                         "completed_topics": [],
+                        "skipped_topics": [],
                         "in_progress_topics": [],
                         "topic_progress": {},
                         "created_at": time.strftime("%Y-%m-%d %H:%M:%S")
@@ -240,6 +242,7 @@ def get_student(student_id: str, subject: Optional[str] = None) -> Dict[str, Any
     res["subject"] = norm_sub
     res["known_topics"] = progress.get("known_topics", [])
     res["completed_topics"] = progress.get("completed_topics", [])
+    res["skipped_topics"] = progress.get("skipped_topics", [])
     res["in_progress_topics"] = progress.get("in_progress_topics", [])
     res["topic_progress"] = progress.get("topic_progress", {})
     res["query_history"] = progress.get("query_history", [])
@@ -309,6 +312,59 @@ def mark_topic_as_learned(student_id: str, topic: str, subject: Optional[str] = 
 
 def add_completed_topic(student_id: str, topic: str, subject: Optional[str] = None) -> Dict[str, Any]:
     return mark_topic_as_learned(student_id, topic, subject)
+
+def mark_topic_as_skipped(student_id: str, topic: str, subject: Optional[str] = None) -> Dict[str, Any]:
+    if not topic:
+        return get_student(student_id, subject)
+
+    norm_sub = normalize_subject_id(subject)
+    topic_clean = topic.strip()
+    topic_lower = topic_clean.lower()
+    topic_space = topic_lower.replace("_", " ")
+    topic_underscore = topic_lower.replace(" ", "_")
+
+    alias_list = [topic_clean, topic_lower, topic_space, topic_underscore]
+
+    if IS_MONGO_CONNECTED and progress_col is not None:
+        try:
+            progress_col.update_one(
+                {"student_id": student_id, "subject": norm_sub},
+                {
+                    "$addToSet": {
+                        "skipped_topics": {"$each": alias_list}
+                    },
+                    "$set": {
+                        "updated_at": time.strftime("%Y-%m-%d %H:%M:%S")
+                    },
+                    "$setOnInsert": {
+                        "known_topics": [],
+                        "completed_topics": [],
+                        "in_progress_topics": [],
+                        "topic_progress": {},
+                        "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "query_history": []
+                    }
+                },
+                upsert=True
+            )
+        except Exception as e:
+            print(f"Error marking topic skipped in MongoDB: {e}")
+
+    cache_key = f"{student_id}:{norm_sub}"
+    rec = get_student_progress(student_id, norm_sub)
+    rec.setdefault("skipped_topics", [])
+    for a in alias_list:
+        if a not in rec["skipped_topics"]:
+            rec["skipped_topics"].append(a)
+
+    rec["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    IN_MEMORY_PROGRESS[cache_key] = rec
+
+    print(f"[OK] Topic '{topic_clean}' successfully marked as skipped in student_progress for {student_id} ({norm_sub}).")
+    return get_student(student_id, norm_sub)
+
+def add_skipped_topic(student_id: str, topic: str, subject: Optional[str] = None) -> Dict[str, Any]:
+    return mark_topic_as_skipped(student_id, topic, subject)
 
 def add_in_progress_topic(student_id: str, topic: str, progress: float, subject: Optional[str] = None):
     norm_sub = normalize_subject_id(subject)

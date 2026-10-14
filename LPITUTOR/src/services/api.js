@@ -145,6 +145,14 @@ export const studentService = {
       topic
     });
     return res.data;
+  },
+  skipTopic: async (studentId = 'STU001', subject = 'operating_systems', topic = '') => {
+    const res = await api.post('/student/skip_topic', {
+      student_id: studentId,
+      subject,
+      topic
+    });
+    return res.data;
   }
 };
 

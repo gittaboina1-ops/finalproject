@@ -27,6 +27,7 @@ export const StudentDashboard = () => {
   const { user } = useAuth();
   const [subjects, setSubjects] = useState(FALLBACK_SUBJECTS);
   const [completedTopics, setCompletedTopics] = useState([]);
+  const [skippedTopics, setSkippedTopics] = useState([]);
   const [history, setHistory] = useState([
     { query: "What is process synchronization?", topic: "process_synchronization", timestamp: "Today" },
     { query: "Explain CPU scheduling algorithms", topic: "cpu_scheduling", timestamp: "Yesterday" }
@@ -51,6 +52,7 @@ export const StudentDashboard = () => {
         if (res) {
           if (res.recent_queries) setHistory(res.recent_queries);
           setCompletedTopics(res.known_topics || res.completed_topics || []);
+          setSkippedTopics(res.skipped_topics || []);
         }
       })
       .catch(err => console.warn('Using fallback history', err));
@@ -130,6 +132,40 @@ export const StudentDashboard = () => {
           ) : (
             <span className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-amber-300/80 text-xs font-mono font-medium">
               Student Known Topics in {selectedSubject.replace('_', ' ')}: None (Ready to begin learning)
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Skipped Topics Section (Saved for Later) */}
+      <div className="glass-card rounded-2xl border border-slate-800 p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white">Skipped Topics (Saved for Later)</h3>
+            <p className="text-xs text-slate-400">Topics deferred during learning sessions for {selectedSubject.replace('_', ' ')}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800/60">
+          {skippedTopics.length > 0 ? (
+            Array.from(new Set(skippedTopics.map(t => t.toLowerCase().replace(/_/g, ' ')))).map((topic, idx) => (
+              <button
+                key={idx}
+                onClick={() => navigate(`/student/chat?subject=${selectedSubject}&query=${encodeURIComponent('Explain ' + topic)}`)}
+                title="Click to learn this skipped topic"
+                className="px-3 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold cursor-pointer transition-colors flex items-center gap-1.5"
+              >
+                <span>⏸</span>
+                <span>{topic.toUpperCase()}</span>
+                <span className="text-[10px] text-amber-400/80 font-normal">→ Learn</span>
+              </button>
+            ))
+          ) : (
+            <span className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs font-mono font-medium">
+              No skipped topics for {selectedSubject.replace('_', ' ')}. All recommended topics up to date.
             </span>
           )}
         </div>

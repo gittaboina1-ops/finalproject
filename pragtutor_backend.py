@@ -545,6 +545,18 @@ def evaluate_quiz(quiz_id: str, answers: list, student_id: str = "STU001", subje
         mark_topic_as_learned(student_id, target_topic, subject=target_subject)
         topic_completed = True
 
+    # Determine next recommended topic using existing course graph and prerequisite relationships
+    next_rec = None
+    try:
+        from prerequisite_engine import get_next_topic_recommendation
+        next_rec = get_next_topic_recommendation(
+            topic_name=target_topic,
+            subject_id=target_subject,
+            student_id=student_id
+        )
+    except Exception as e:
+        print(f"Notice: Could not get next topic recommendation: {e}")
+
     return {
         "status": "success",
         "quiz_id": quiz_id,
@@ -556,7 +568,10 @@ def evaluate_quiz(quiz_id: str, answers: list, student_id: str = "STU001", subje
         "percentage": round(score_percentage, 1),
         "passed": is_passed,
         "topic_completed": topic_completed,
-        "results": detailed_results
+        "results": detailed_results,
+        "next_topic": next_rec.get("topic") if next_rec else None,
+        "next_topic_name": next_rec.get("topic_name") if next_rec else None,
+        "next_topic_description": next_rec.get("description", "") if next_rec else ""
     }
 
 
@@ -942,6 +957,18 @@ def process_query(
                 "content": mermaid_code
             }
 
+    # Determine next recommended topic using existing course graph and prerequisite relationships
+    next_rec = None
+    try:
+        from prerequisite_engine import get_next_topic_recommendation
+        next_rec = get_next_topic_recommendation(
+            topic_name=target_topic,
+            subject_id=subject,
+            student_id=student_id
+        )
+    except Exception as e:
+        print(f"Notice: Could not determine next topic recommendation: {e}")
+
     # ========================================================
     # BUILD FINAL CONTEXT
     # ========================================================
@@ -1005,7 +1032,16 @@ def process_query(
             quiz_id,
 
         "quiz_message":
-            quiz_msg
+            quiz_msg,
+
+        "next_topic":
+            next_rec.get("topic") if next_rec else None,
+
+        "next_topic_name":
+            next_rec.get("topic_name") if next_rec else None,
+
+        "next_topic_description":
+            next_rec.get("description", "") if next_rec else ""
     }
 
     # Record query history in MongoDB student_progress

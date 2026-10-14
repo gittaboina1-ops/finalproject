@@ -1,638 +1,642 @@
 {
-    "users": {
-        "john@example.com": {
-            "email": "john@example.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "computer_networks"
-            ],
-            "created_at": "2026-09-19",
-            "department": "Computer Science",
-            "id": "TCH001",
-            "joined_date": "2026-09-19",
-            "name": "John",
-            "password": "password123",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "computer_networks"
-            ],
-            "teacher_id": "TCH001"
-        },
-        "priyanka@gmail.com": {
-            "email": "priyanka@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems"
-            ],
-            "created_at": "2026-09-19",
-            "department": "os",
-            "id": "TCH003",
-            "joined_date": "2026-09-19",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "operating_systems"
-            ],
-            "teacher_id": "TCH003"
-        },
-        "v@gmail.com": {
-            "email": "v@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "computer_networks",
-                "operating_systems"
-            ],
-            "created_at": "2026-09-20",
-            "department": "cn",
-            "id": "TCH004",
-            "joined_date": "2026-09-20",
-            "name": "varsha",
-            "password": "123456",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "computer_networks",
-                "operating_systems"
-            ],
-            "teacher_id": "TCH004"
-        },
-        "prof_davis@university.edu": {
-            "email": "prof_davis@university.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "dbms"
-            ],
-            "created_at": "2026-09-24 18:51:12",
-            "department": "Computer Science",
-            "id": "TCH010",
-            "joined_date": "2026-09-24",
-            "name": "Prof. Davis",
-            "password": "profdavispassword",
-            "role": "teacher",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": null,
-            "subjects": [
-                "operating_systems",
-                "dbms"
-            ],
-            "teacher_id": "TCH010"
-        },
-        "l@gmail.com": {
-            "email": "l@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "created_at": "2026-09-26 14:43:24",
-            "department": "cse",
-            "id": "TCH011",
-            "joined_date": "2026-09-26",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "teacher",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": null,
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "teacher_id": "TCH011"
-        },
-        "stu001@pragtutor.edu": {
-            "email": "stu001@pragtutor.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "completed_topics": [
-                "process",
-                "process states",
-                "pcb"
-            ],
-            "in_progress_topics": [
-                "cpu scheduling"
-            ],
-            "name": "Student 1",
-            "query_history": [{
-                    "query": "What is a process?",
-                    "topic": "process"
-                },
-                {
-                    "query": "Explain CPU scheduling",
-                    "topic": "cpu scheduling"
-                }
-            ],
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems"
-            ],
-            "status": "active",
-            "student_id": "STU001",
-            "subject": "Operating Systems",
-            "topic_progress": {
-                "process": 1.0,
-                "process states": 1.0,
-                "pcb": 1.0,
-                "cpu scheduling": 0.4
-            }
-        },
-        "p@gmail.com": {
-            "email": "p@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-19",
-            "department": null,
-            "id": "STU002",
-            "joined_date": "2026-09-19",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU002",
-            "subjects": []
-        },
-        "reddy@gmail.com": {
-            "email": "reddy@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-20",
-            "department": null,
-            "id": "STU005",
-            "joined_date": "2026-09-20",
-            "name": "reddy",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU005",
-            "subjects": []
-        },
-        "gittaboina1@gmail.com": {
-            "email": "gittaboina1@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-21",
-            "department": null,
-            "id": "STU006",
-            "joined_date": "2026-09-21",
-            "name": "varun",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU006",
-            "subjects": []
-        },
-        "verify@pragtutor.edu": {
-            "email": "verify@pragtutor.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "created_at": "2026-09-24 17:24:12",
-            "joined_date": "2026-09-24",
-            "name": "Verification Student",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "status": "active",
-            "student_id": "STU_VERIFY_999",
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ]
-        },
-        "alice@student.edu": {
-            "email": "alice@student.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "created_at": "2026-09-24 18:51:12",
-            "department": null,
-            "id": "STU009",
-            "joined_date": "2026-09-24",
-            "name": "Alice Wonder",
-            "password": "alicepassword123",
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "status": "active",
-            "student_id": "STU009",
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "teacher_id": null
-        },
-        "ar@gmail.com": {
-            "email": "ar@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-29 13:27:10",
-            "department": null,
-            "id": "STU012",
-            "joined_date": "2026-09-29",
-            "name": "akesh reddy",
-            "password": "654321",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU012",
-            "subjects": [],
-            "teacher_id": null
-        },
-        "g@gmail.com": {
-            "email": "g@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-29 16:19:08",
-            "department": null,
-            "id": "STU013",
-            "joined_date": "2026-09-29",
-            "name": "dd dd",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU013",
-            "subjects": [],
-            "teacher_id": null
-        },
-        "sunithagittaboina@gmail.com": {
-            "email": "sunithagittaboina@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-10-03 18:54:23",
-            "department": null,
-            "id": "STU014",
-            "joined_date": "2026-10-03",
-            "name": "a",
-            "password": "varun@21",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU014",
-            "subjects": [],
-            "teacher_id": null
-        },
-        "jawopej417@abowned.com": {
-            "email": "jawopej417@abowned.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-10-04 21:09:04",
-            "department": null,
-            "id": "STU015",
-            "joined_date": "2026-10-04",
-            "name": "varun",
-            "password": "jhkjads",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU015",
-            "subjects": [],
-            "teacher_id": null
-        }
+  "users": {
+    "john@example.com": {
+      "email": "john@example.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "computer_networks"
+      ],
+      "created_at": "2026-09-19",
+      "department": "Computer Science",
+      "id": "TCH001",
+      "joined_date": "2026-09-19",
+      "name": "John",
+      "password": "password123",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "computer_networks"
+      ],
+      "teacher_id": "TCH001"
     },
-    "teachers": [{
-            "email": "john@example.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "computer_networks"
-            ],
-            "created_at": "2026-09-19",
-            "department": "Computer Science",
-            "id": "TCH001",
-            "joined_date": "2026-09-19",
-            "name": "John",
-            "password": "password123",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "computer_networks"
-            ],
-            "teacher_id": "TCH001"
+    "priyanka@gmail.com": {
+      "email": "priyanka@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems"
+      ],
+      "created_at": "2026-09-19",
+      "department": "os",
+      "id": "TCH003",
+      "joined_date": "2026-09-19",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "operating_systems"
+      ],
+      "teacher_id": "TCH003"
+    },
+    "v@gmail.com": {
+      "email": "v@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "computer_networks",
+        "operating_systems"
+      ],
+      "created_at": "2026-09-20",
+      "department": "cn",
+      "id": "TCH004",
+      "joined_date": "2026-09-20",
+      "name": "varsha",
+      "password": "123456",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "computer_networks",
+        "operating_systems"
+      ],
+      "teacher_id": "TCH004"
+    },
+    "prof_davis@university.edu": {
+      "email": "prof_davis@university.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "dbms"
+      ],
+      "created_at": "2026-09-24 18:51:12",
+      "department": "Computer Science",
+      "id": "TCH010",
+      "joined_date": "2026-09-24",
+      "name": "Prof. Davis",
+      "password": "profdavispassword",
+      "role": "teacher",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": null,
+      "subjects": [
+        "operating_systems",
+        "dbms"
+      ],
+      "teacher_id": "TCH010"
+    },
+    "l@gmail.com": {
+      "email": "l@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "created_at": "2026-09-26 14:43:24",
+      "department": "cse",
+      "id": "TCH011",
+      "joined_date": "2026-09-26",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "teacher",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": null,
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "teacher_id": "TCH011"
+    },
+    "stu001@pragtutor.edu": {
+      "email": "stu001@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "completed_topics": [
+        "process",
+        "process states",
+        "pcb"
+      ],
+      "in_progress_topics": [
+        "cpu scheduling"
+      ],
+      "name": "Student 1",
+      "query_history": [
+        {
+          "query": "What is a process?",
+          "topic": "process"
         },
         {
-            "email": "priyanka@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems"
-            ],
-            "created_at": "2026-09-19",
-            "department": "os",
-            "id": "TCH003",
-            "joined_date": "2026-09-19",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "operating_systems"
-            ],
-            "teacher_id": "TCH003"
-        },
-        {
-            "email": "v@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "computer_networks",
-                "operating_systems"
-            ],
-            "created_at": "2026-09-20",
-            "department": "cn",
-            "id": "TCH004",
-            "joined_date": "2026-09-20",
-            "name": "varsha",
-            "password": "123456",
-            "role": "teacher",
-            "status": "active",
-            "subjects": [
-                "computer_networks",
-                "operating_systems"
-            ],
-            "teacher_id": "TCH004"
-        },
-        {
-            "email": "prof_davis@university.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "dbms"
-            ],
-            "created_at": "2026-09-24 18:51:12",
-            "department": "Computer Science",
-            "id": "TCH010",
-            "joined_date": "2026-09-24",
-            "name": "Prof. Davis",
-            "password": "profdavispassword",
-            "role": "teacher",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": null,
-            "subjects": [
-                "operating_systems",
-                "dbms"
-            ],
-            "teacher_id": "TCH010"
-        },
-        {
-            "email": "l@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "created_at": "2026-09-26 14:43:24",
-            "department": "cse",
-            "id": "TCH011",
-            "joined_date": "2026-09-26",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "teacher",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": null,
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "teacher_id": "TCH011"
+          "query": "Explain CPU scheduling",
+          "topic": "cpu scheduling"
         }
-    ],
-    "students": [{
-            "email": "stu001@pragtutor.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "completed_topics": [
-                "process",
-                "process states",
-                "pcb"
-            ],
-            "in_progress_topics": [
-                "cpu scheduling"
-            ],
-            "name": "Student 1",
-            "query_history": [{
-                    "query": "What is a process?",
-                    "topic": "process"
-                },
-                {
-                    "query": "Explain CPU scheduling",
-                    "topic": "cpu scheduling"
-                }
-            ],
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems"
-            ],
-            "status": "active",
-            "student_id": "STU001",
-            "subject": "Operating Systems",
-            "topic_progress": {
-                "process": 1.0,
-                "process states": 1.0,
-                "pcb": 1.0,
-                "cpu scheduling": 0.4
-            }
+      ],
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems"
+      ],
+      "status": "active",
+      "student_id": "STU001",
+      "subject": "Operating Systems",
+      "topic_progress": {
+        "process": 1.0,
+        "process states": 1.0,
+        "pcb": 1.0,
+        "cpu scheduling": 0.4
+      }
+    },
+    "p@gmail.com": {
+      "email": "p@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-19",
+      "department": null,
+      "id": "STU002",
+      "joined_date": "2026-09-19",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU002",
+      "subjects": []
+    },
+    "reddy@gmail.com": {
+      "email": "reddy@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-20",
+      "department": null,
+      "id": "STU005",
+      "joined_date": "2026-09-20",
+      "name": "reddy",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU005",
+      "subjects": []
+    },
+    "gittaboina1@gmail.com": {
+      "email": "gittaboina1@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-21",
+      "department": null,
+      "id": "STU006",
+      "joined_date": "2026-09-21",
+      "name": "varun",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU006",
+      "subjects": []
+    },
+    "verify@pragtutor.edu": {
+      "email": "verify@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "created_at": "2026-09-24 17:24:12",
+      "joined_date": "2026-09-24",
+      "name": "Verification Student",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "status": "active",
+      "student_id": "STU_VERIFY_999",
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ]
+    },
+    "alice@student.edu": {
+      "email": "alice@student.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "created_at": "2026-09-24 18:51:12",
+      "department": null,
+      "id": "STU009",
+      "joined_date": "2026-09-24",
+      "name": "Alice Wonder",
+      "password": "alicepassword123",
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "status": "active",
+      "student_id": "STU009",
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "teacher_id": null
+    },
+    "ar@gmail.com": {
+      "email": "ar@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-29 13:27:10",
+      "department": null,
+      "id": "STU012",
+      "joined_date": "2026-09-29",
+      "name": "akesh reddy",
+      "password": "654321",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU012",
+      "subjects": [],
+      "teacher_id": null
+    },
+    "g@gmail.com": {
+      "email": "g@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-29 16:19:08",
+      "department": null,
+      "id": "STU013",
+      "joined_date": "2026-09-29",
+      "name": "dd dd",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU013",
+      "subjects": [],
+      "teacher_id": null
+    },
+    "sunithagittaboina@gmail.com": {
+      "email": "sunithagittaboina@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-03 18:54:23",
+      "department": null,
+      "id": "STU014",
+      "joined_date": "2026-10-03",
+      "name": "a",
+      "password": "varun@21",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU014",
+      "subjects": [],
+      "teacher_id": null
+    },
+    "jawopej417@abowned.com": {
+      "email": "jawopej417@abowned.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-04 21:09:04",
+      "department": null,
+      "id": "STU015",
+      "joined_date": "2026-10-04",
+      "name": "varun",
+      "password": "jhkjads",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU015",
+      "subjects": [],
+      "teacher_id": null
+    }
+  },
+  "teachers": [
+    {
+      "email": "john@example.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "computer_networks"
+      ],
+      "created_at": "2026-09-19",
+      "department": "Computer Science",
+      "id": "TCH001",
+      "joined_date": "2026-09-19",
+      "name": "John",
+      "password": "password123",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "computer_networks"
+      ],
+      "teacher_id": "TCH001"
+    },
+    {
+      "email": "priyanka@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems"
+      ],
+      "created_at": "2026-09-19",
+      "department": "os",
+      "id": "TCH003",
+      "joined_date": "2026-09-19",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "operating_systems"
+      ],
+      "teacher_id": "TCH003"
+    },
+    {
+      "email": "v@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "computer_networks",
+        "operating_systems"
+      ],
+      "created_at": "2026-09-20",
+      "department": "cn",
+      "id": "TCH004",
+      "joined_date": "2026-09-20",
+      "name": "varsha",
+      "password": "123456",
+      "role": "teacher",
+      "status": "active",
+      "subjects": [
+        "computer_networks",
+        "operating_systems"
+      ],
+      "teacher_id": "TCH004"
+    },
+    {
+      "email": "prof_davis@university.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "dbms"
+      ],
+      "created_at": "2026-09-24 18:51:12",
+      "department": "Computer Science",
+      "id": "TCH010",
+      "joined_date": "2026-09-24",
+      "name": "Prof. Davis",
+      "password": "profdavispassword",
+      "role": "teacher",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": null,
+      "subjects": [
+        "operating_systems",
+        "dbms"
+      ],
+      "teacher_id": "TCH010"
+    },
+    {
+      "email": "l@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "created_at": "2026-09-26 14:43:24",
+      "department": "cse",
+      "id": "TCH011",
+      "joined_date": "2026-09-26",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "teacher",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": null,
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "teacher_id": "TCH011"
+    }
+  ],
+  "students": [
+    {
+      "email": "stu001@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "completed_topics": [
+        "process",
+        "process states",
+        "pcb"
+      ],
+      "in_progress_topics": [
+        "cpu scheduling"
+      ],
+      "name": "Student 1",
+      "query_history": [
+        {
+          "query": "What is a process?",
+          "topic": "process"
         },
         {
-            "email": "p@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-19",
-            "department": null,
-            "id": "STU002",
-            "joined_date": "2026-09-19",
-            "name": "priyanka",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU002",
-            "subjects": []
-        },
-        {
-            "email": "reddy@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-20",
-            "department": null,
-            "id": "STU005",
-            "joined_date": "2026-09-20",
-            "name": "reddy",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU005",
-            "subjects": []
-        },
-        {
-            "email": "gittaboina1@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-21",
-            "department": null,
-            "id": "STU006",
-            "joined_date": "2026-09-21",
-            "name": "varun",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU006",
-            "subjects": []
-        },
-        {
-            "email": "verify@pragtutor.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "created_at": "2026-09-24 17:24:12",
-            "joined_date": "2026-09-24",
-            "name": "Verification Student",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "status": "active",
-            "student_id": "STU_VERIFY_999",
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ]
-        },
-        {
-            "email": "alice@student.edu",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "created_at": "2026-09-24 18:51:12",
-            "department": null,
-            "id": "STU009",
-            "joined_date": "2026-09-24",
-            "name": "Alice Wonder",
-            "password": "alicepassword123",
-            "role": "student",
-            "selected_subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "status": "active",
-            "student_id": "STU009",
-            "subjects": [
-                "operating_systems",
-                "computer_networks"
-            ],
-            "teacher_id": null
-        },
-        {
-            "email": "ar@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-29 13:27:10",
-            "department": null,
-            "id": "STU012",
-            "joined_date": "2026-09-29",
-            "name": "akesh reddy",
-            "password": "654321",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU012",
-            "subjects": [],
-            "teacher_id": null
-        },
-        {
-            "email": "g@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-09-29 16:19:08",
-            "department": null,
-            "id": "STU013",
-            "joined_date": "2026-09-29",
-            "name": "dd dd",
-            "password": "123456",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU013",
-            "subjects": [],
-            "teacher_id": null
-        },
-        {
-            "email": "sunithagittaboina@gmail.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-10-03 18:54:23",
-            "department": null,
-            "id": "STU014",
-            "joined_date": "2026-10-03",
-            "name": "a",
-            "password": "varun@21",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU014",
-            "subjects": [],
-            "teacher_id": null
-        },
-        {
-            "email": "jawopej417@abowned.com",
-            "access_granted": true,
-            "account_status": "active",
-            "assigned_subjects": [],
-            "created_at": "2026-10-04 21:09:04",
-            "department": null,
-            "id": "STU015",
-            "joined_date": "2026-10-04",
-            "name": "varun",
-            "password": "jhkjads",
-            "role": "student",
-            "selected_subjects": [],
-            "status": "active",
-            "student_id": "STU015",
-            "subjects": [],
-            "teacher_id": null
+          "query": "Explain CPU scheduling",
+          "topic": "cpu scheduling"
         }
-    ]
+      ],
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems"
+      ],
+      "status": "active",
+      "student_id": "STU001",
+      "subject": "Operating Systems",
+      "topic_progress": {
+        "process": 1.0,
+        "process states": 1.0,
+        "pcb": 1.0,
+        "cpu scheduling": 0.4
+      }
+    },
+    {
+      "email": "p@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-19",
+      "department": null,
+      "id": "STU002",
+      "joined_date": "2026-09-19",
+      "name": "priyanka",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU002",
+      "subjects": []
+    },
+    {
+      "email": "reddy@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-20",
+      "department": null,
+      "id": "STU005",
+      "joined_date": "2026-09-20",
+      "name": "reddy",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU005",
+      "subjects": []
+    },
+    {
+      "email": "gittaboina1@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-21",
+      "department": null,
+      "id": "STU006",
+      "joined_date": "2026-09-21",
+      "name": "varun",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU006",
+      "subjects": []
+    },
+    {
+      "email": "verify@pragtutor.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "created_at": "2026-09-24 17:24:12",
+      "joined_date": "2026-09-24",
+      "name": "Verification Student",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "status": "active",
+      "student_id": "STU_VERIFY_999",
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ]
+    },
+    {
+      "email": "alice@student.edu",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "created_at": "2026-09-24 18:51:12",
+      "department": null,
+      "id": "STU009",
+      "joined_date": "2026-09-24",
+      "name": "Alice Wonder",
+      "password": "alicepassword123",
+      "role": "student",
+      "selected_subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "status": "active",
+      "student_id": "STU009",
+      "subjects": [
+        "operating_systems",
+        "computer_networks"
+      ],
+      "teacher_id": null
+    },
+    {
+      "email": "ar@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-29 13:27:10",
+      "department": null,
+      "id": "STU012",
+      "joined_date": "2026-09-29",
+      "name": "akesh reddy",
+      "password": "654321",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU012",
+      "subjects": [],
+      "teacher_id": null
+    },
+    {
+      "email": "g@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-09-29 16:19:08",
+      "department": null,
+      "id": "STU013",
+      "joined_date": "2026-09-29",
+      "name": "dd dd",
+      "password": "123456",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU013",
+      "subjects": [],
+      "teacher_id": null
+    },
+    {
+      "email": "sunithagittaboina@gmail.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-03 18:54:23",
+      "department": null,
+      "id": "STU014",
+      "joined_date": "2026-10-03",
+      "name": "a",
+      "password": "varun@21",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU014",
+      "subjects": [],
+      "teacher_id": null
+    },
+    {
+      "email": "jawopej417@abowned.com",
+      "access_granted": true,
+      "account_status": "active",
+      "assigned_subjects": [],
+      "created_at": "2026-10-04 21:09:04",
+      "department": null,
+      "id": "STU015",
+      "joined_date": "2026-10-04",
+      "name": "varun",
+      "password": "jhkjads",
+      "role": "student",
+      "selected_subjects": [],
+      "status": "active",
+      "student_id": "STU015",
+      "subjects": [],
+      "teacher_id": null
+    }
+  ]
 }
